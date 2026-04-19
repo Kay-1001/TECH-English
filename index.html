@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>技術英語トレーニング</title>
+<meta name="description" content="技術英語の文構造と語彙を学習するオンライン練習アプリ">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Serif+JP:wght@400;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="./tailwind.css">
+<style>
+  body {
+    background: #fafaf9;
+    margin: 0;
+    font-family: "Noto Serif JP", "Hiragino Mincho ProN", serif;
+    min-height: 100vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .font-mono { font-family: "JetBrains Mono", ui-monospace, monospace; }
+  .font-serif { font-family: "Noto Serif JP", "Hiragino Mincho ProN", serif; }
+  main { flex: 1; }
+</style>
+</head>
+<body>
+
+<header class="border-b-2 border-stone-900 bg-stone-50">
+  <div class="max-w-3xl mx-auto px-4 py-4">
+    <div class="text-[10px] tracking-[0.25em] text-stone-500 font-mono uppercase">
+      Technical English
+    </div>
+    <h1 class="text-2xl font-serif text-stone-900 leading-tight mt-1">
+      技術英語トレーニング
+    </h1>
+  </div>
+</header>
+
+<main class="max-w-3xl mx-auto px-4 py-8 w-full space-y-8">
+
+  <div class="border-l-4 border-stone-900 pl-4 py-1">
+    <div class="text-[10px] tracking-[0.3em] font-mono text-stone-600 uppercase mb-1">
+      Welcome
+    </div>
+    <h2 class="text-xl font-serif text-stone-900">
+      2 種類のトレーニングから選ぼう
+    </h2>
+  </div>
+
+  <p class="text-sm font-serif text-stone-700 leading-relaxed">
+    技術英語の基本となる「文構造の作り方」と「頻出語彙」を、自習で身につけるためのオンライン練習アプリです。どちらもスマートフォン・タブレット・パソコンで動作し、途中で閉じても進捗は自動保存されます。
+  </p>
+
+  <div class="grid gap-4 md:grid-cols-2">
+
+    <!-- 文構造トレーニング -->
+    <a href="./practice.html" class="block border-2 border-stone-900 bg-white hover:bg-amber-50 transition-colors group">
+      <div class="border-b border-stone-200 bg-amber-50 group-hover:bg-amber-100 transition-colors px-4 py-2 flex items-center justify-between">
+        <div class="text-[10px] font-mono tracking-[0.25em] text-amber-700 uppercase">
+          Practice
+        </div>
+        <div class="text-[10px] font-mono text-amber-700">01</div>
+      </div>
+      <div class="p-5 space-y-3">
+        <h3 class="text-lg font-serif text-stone-900">文構造トレーニング</h3>
+        <p class="text-xs font-serif text-stone-600 leading-relaxed">
+          動作主語 SVO・無生物主語 SVO・自動詞の SV・be 動詞の SVC という 4 つの型を、例文と 20 問の練習で身につける。多肢選択と記述で構成。
+        </p>
+        <div class="flex items-center justify-between pt-2 border-t border-stone-200">
+          <div class="text-[10px] font-mono text-stone-500 tracking-wider">
+            全 20 問 · 約 20 分
+          </div>
+          <div class="text-xs font-mono text-amber-700 group-hover:translate-x-1 transition-transform">
+            開始する →
+          </div>
+        </div>
+      </div>
+    </a>
+
+    <!-- 語彙トレーニング -->
+    <a href="./vocabulary.html" class="block border-2 border-stone-900 bg-white hover:bg-sky-50 transition-colors group">
+      <div class="border-b border-stone-200 bg-sky-50 group-hover:bg-sky-100 transition-colors px-4 py-2 flex items-center justify-between">
+        <div class="text-[10px] font-mono tracking-[0.25em] text-sky-700 uppercase">
+          Vocabulary
+        </div>
+        <div class="text-[10px] font-mono text-sky-700">02</div>
+      </div>
+      <div class="p-5 space-y-3">
+        <h3 class="text-lg font-serif text-stone-900">語彙トレーニング</h3>
+        <p class="text-xs font-serif text-stone-600 leading-relaxed">
+          技術英語の重要語彙 35 語を、4 択の意味選択クイズで学習する。動詞・形容詞・専門用語・名詞の 4 グループに分類。各語に新規の例文あり。
+        </p>
+        <div class="flex items-center justify-between pt-2 border-t border-stone-200">
+          <div class="text-[10px] font-mono text-stone-500 tracking-wider">
+            全 35 語 · 約 20 分
+          </div>
+          <div class="text-xs font-mono text-sky-700 group-hover:translate-x-1 transition-transform">
+            開始する →
+          </div>
+        </div>
+      </div>
+    </a>
+
+  </div>
+
+  <!-- 使い方 -->
+  <div class="border-2 border-stone-300 bg-white p-5 space-y-3">
+    <div class="text-[10px] font-mono tracking-widest text-stone-500 uppercase">
+      使い方
+    </div>
+    <ol class="text-sm font-serif text-stone-700 space-y-2 list-decimal list-inside leading-relaxed">
+      <li>上のカードから始めたいトレーニングを選ぶ</li>
+      <li>最初の画面で出席番号と氏名を入力する</li>
+      <li>問題を進める（途中で閉じても OK。次回は続きから始まる）</li>
+      <li>最終画面のスクリーンショットを撮って Google Classroom に提出する</li>
+    </ol>
+  </div>
+
+  <!-- 動作環境 -->
+  <div class="bg-stone-900 text-stone-100 p-5 space-y-2">
+    <div class="text-[10px] font-mono tracking-[0.25em] text-amber-400 uppercase">
+      動作環境
+    </div>
+    <p class="text-xs font-serif leading-relaxed">
+      最新の Chrome・Safari・Edge・Firefox で動作します。進捗データはブラウザ内に保存されます（ブラウザ履歴や Cookie を削除すると進捗もリセットされる点に注意）。
+    </p>
+  </div>
+
+</main>
+
+<footer class="border-t border-stone-300 bg-stone-100 py-3 px-4 mt-8">
+  <div class="max-w-3xl mx-auto text-[10px] font-mono text-stone-500 text-center tracking-wider">
+    © 2026 Kaoruko Takechi · All rights reserved.
+  </div>
+</footer>
+
+</body>
+</html>
