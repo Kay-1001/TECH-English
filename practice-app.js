@@ -414,7 +414,11 @@ const Header = ({
   className: "text-right text-[10px] font-mono text-stone-600 leading-tight"
 }, /*#__PURE__*/React.createElement("div", null, "No. ", student.id), /*#__PURE__*/React.createElement("div", {
   className: "max-w-[8rem] truncate"
-}, student.name)), /*#__PURE__*/React.createElement("button", {
+}, student.name)), /*#__PURE__*/React.createElement("a", {
+  href: "./",
+  className: "text-[10px] font-mono tracking-wider text-stone-500 hover:text-stone-900 uppercase border border-stone-300 px-2 py-1 hover:border-stone-900 transition-colors no-underline",
+  title: "\u30C8\u30EC\u30FC\u30CB\u30F3\u30B0\u9078\u629E\u753B\u9762\u3078\u623B\u308B"
+}, "\u2190 Home"), /*#__PURE__*/React.createElement("button", {
   onClick: onReset,
   className: "text-[10px] font-mono tracking-wider text-stone-500 hover:text-stone-900 uppercase border border-stone-300 px-2 py-1 hover:border-stone-900 transition-colors"
 }, "Reset"))));
