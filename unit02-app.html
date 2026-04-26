@@ -1,0 +1,2390 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>第2回 技術英語トレーニング</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Noto+Serif+JP:wght@500;600;700;800&family=Inter:wght@500;600;700&family=JetBrains+Mono:wght@500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --paper: #faf8f3;
+    --paper-light: #fefcf7;
+    --ink: #0d0a05;
+    --ink-soft: #2c2620;
+    --ink-faint: #5a5048;
+    --rule: #b8a890;
+    --rule-soft: #d4c8b0;
+    --accent: #8b3a1a;
+    --accent-soft: #c97548;
+    --highlight: #fef3c7;
+    --highlight-deep: #fde68a;
+    --correct: #1f5238;
+    --correct-bg: #c9e0d3;
+    --wrong: #8b1f1f;
+    --wrong-bg: #ebc5c5;
+    --teacher: #a01daf;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Noto Serif JP", "Hiragino Mincho ProN", "游明朝", serif;
+    font-weight: 500;
+    -webkit-font-smoothing: antialiased;
+  }
+  .font-display { font-family: "Cormorant Garamond", "Hiragino Mincho ProN", serif; font-weight: 700; }
+  .font-mono { font-family: "JetBrains Mono", "SF Mono", monospace; font-weight: 600; }
+  .font-sans { font-family: "Inter", -apple-system, "Hiragino Sans", sans-serif; font-weight: 600; }
+
+  .paper-grain {
+    background-color: var(--paper);
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(139, 58, 26, 0.02) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(139, 58, 26, 0.015) 0%, transparent 40%);
+    min-height: 100vh;
+  }
+
+  /* タッチ可能な周辺語（ターゲット語以外） */
+  .clickable-word {
+    border-bottom: 1px dotted var(--accent-soft);
+    cursor: pointer;
+    color: var(--accent);
+    padding: 0 1px;
+    transition: background-color 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .clickable-word:hover, .clickable-word:active {
+    background-color: var(--highlight);
+  }
+  .clickable-word.active {
+    background-color: var(--highlight-deep);
+  }
+
+  /* ターゲット語（タッチ不可、強調表示） */
+  .target-word {
+    background-color: var(--ink);
+    color: var(--paper);
+    padding: 1px 4px;
+    font-weight: 500;
+    font-style: italic;
+  }
+
+  /* 教員モードバッジ */
+  .teacher-badge {
+    background: linear-gradient(90deg, #c026d3, #a855f7);
+    color: white;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    letter-spacing: 0.1em;
+    padding: 3px 8px;
+    text-transform: uppercase;
+  }
+
+  /* 音声ボタン：ミディアムグレー背景・白文字・存在感を出す */
+  .btn-voice {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 13px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    border: none;
+    background: #6a6258;
+    color: #faf8f3;
+    padding: 9px 16px;
+    transition: all 0.15s;
+    cursor: pointer;
+    min-height: 40px;
+    min-width: 56px;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    -webkit-tap-highlight-color: transparent;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+  }
+  .btn-voice:hover {
+    background: var(--accent);
+    box-shadow: 0 2px 6px rgba(139, 58, 26, 0.3);
+    transform: translateY(-1px);
+  }
+  .btn-voice:active {
+    transform: translateY(0);
+    box-shadow: 0 1px 2px rgba(0,0,0,0.1);
+  }
+  .btn-voice.active {
+    background: var(--accent);
+    box-shadow: 0 0 0 3px rgba(139, 58, 26, 0.25);
+    animation: pulse-voice 1.5s ease-in-out infinite;
+  }
+  @keyframes pulse-voice {
+    0%, 100% { box-shadow: 0 0 0 3px rgba(139, 58, 26, 0.25); }
+    50% { box-shadow: 0 0 0 6px rgba(139, 58, 26, 0.15); }
+  }
+  .btn-voice .voice-icon {
+    font-size: 16px;
+  }
+
+  .chip {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    font-weight: 600;
+    letter-spacing: 0.05em;
+    padding: 7px 13px;
+    border: 1.5px solid var(--ink-soft);
+    background: var(--paper-light);
+    color: var(--ink);
+    cursor: pointer;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .chip:hover { border-color: var(--ink); background: var(--rule-soft); }
+  .chip.active { background: var(--ink); color: var(--paper); border-color: var(--ink); font-weight: 700; }
+
+  .btn-primary {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: "Cormorant Garamond", serif;
+    font-size: 18px;
+    font-weight: 500;
+    padding: 14px 28px;
+    border: none;
+    cursor: pointer;
+    letter-spacing: 0.02em;
+    transition: all 0.15s;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-primary:hover { background: var(--accent); }
+
+  /* 4択ボタン */
+  .choice-btn {
+    width: 100%;
+    text-align: left;
+    padding: 14px 18px;
+    border: 1.5px solid var(--rule);
+    background: var(--paper-light);
+    font-family: "Noto Serif JP", serif;
+    font-size: 16px;
+    font-weight: 600;
+    color: var(--ink);
+    transition: all 0.15s;
+    cursor: pointer;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .choice-btn:hover { background: var(--rule-soft); border-color: var(--ink); }
+  .choice-btn.correct { background: var(--correct-bg); border-color: var(--correct); border-width: 2px; color: var(--correct); font-weight: 700; }
+  .choice-btn.wrong { background: var(--wrong-bg); border-color: var(--wrong); border-width: 2px; color: var(--wrong); font-weight: 700; }
+  .choice-btn.disabled-correct { background: var(--correct-bg); border-color: var(--correct); border-width: 2px; color: var(--correct); font-weight: 700; opacity: 0.85; }
+  .choice-btn.disabled-other { background: var(--paper); color: var(--ink-faint); cursor: default; }
+
+  .choice-letter {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 16px;
+    font-weight: 700;
+    font-style: italic;
+    color: var(--ink-soft);
+    margin-right: 14px;
+  }
+
+  /* ポップアップ */
+  .popup {
+    position: fixed;
+    z-index: 100;
+    background: var(--ink);
+    color: var(--paper);
+    border: 1px solid var(--ink);
+    padding: 12px 16px;
+    min-width: 200px;
+    max-width: 300px;
+    font-family: "Noto Serif JP", serif;
+    box-shadow: 0 4px 20px rgba(0,0,0,0.15);
+  }
+  .popup-headword {
+    font-family: "Cormorant Garamond", serif;
+    font-size: 22px;
+    font-weight: 600;
+    color: var(--paper);
+    margin-bottom: 4px;
+  }
+  .popup-pos {
+    font-family: "Cormorant Garamond", serif;
+    font-style: italic;
+    color: var(--rule);
+    font-size: 13px;
+    margin-left: 8px;
+  }
+  .popup-meaning {
+    color: var(--paper);
+    font-size: 13px;
+    line-height: 1.5;
+    opacity: 0.95;
+  }
+  .popup-not-found {
+    color: var(--rule);
+    font-size: 12px;
+    font-style: italic;
+  }
+
+  /* 進捗バー */
+  .progress-track {
+    height: 2px;
+    background: var(--rule-soft);
+    width: 100%;
+    overflow: hidden;
+  }
+  .progress-fill {
+    height: 100%;
+    background: var(--accent);
+    transition: width 0.3s;
+  }
+
+  .ornamental-rule {
+    height: 1px;
+    background: var(--rule);
+    margin: 1.5rem 0;
+    position: relative;
+  }
+  .ornamental-rule::after {
+    content: "❦";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--paper);
+    padding: 0 1rem;
+    color: var(--accent-soft);
+    font-size: 14px;
+  }
+
+  ::-webkit-scrollbar { width: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--rule); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--ink-faint); }
+
+  /* モバイル最適化 */
+  @media (max-width: 640px) {
+    .popup { left: 10px !important; right: 10px !important; max-width: none !important; }
+  }
+
+  /* ランディングカード */
+  .landing-card {
+    background: var(--paper-light);
+    border: 1.5px solid var(--ink-soft);
+    padding: 28px 24px;
+    cursor: pointer;
+    transition: all 0.2s;
+    display: block;
+    text-decoration: none;
+    color: var(--ink);
+    position: relative;
+  }
+  .landing-card:hover {
+    border-color: var(--accent);
+    background: #fefcf7;
+    transform: translateY(-2px);
+    box-shadow: 0 6px 20px rgba(0,0,0,0.08);
+  }
+  .landing-card.disabled {
+    opacity: 0.55;
+    cursor: not-allowed;
+  }
+  .landing-card.disabled:hover {
+    transform: none;
+    box-shadow: none;
+    border-color: var(--ink-soft);
+    background: var(--paper-light);
+  }
+  .landing-card-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 8px 12px;
+    margin: -28px -24px 20px -24px;
+    font-family: "JetBrains Mono", monospace;
+    font-size: 12px;
+    font-weight: 700;
+    letter-spacing: 0.2em;
+    text-transform: uppercase;
+  }
+  .landing-card.practice .landing-card-header {
+    background: #fef3c7;
+    color: #78350f;
+  }
+  .landing-card.vocab .landing-card-header {
+    background: #dbeafe;
+    color: #1e3a5f;
+  }
+</style>
+</head>
+<body class="paper-grain">
+<div id="root"></div>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useRef, useMemo } = React;
+
+/* ═══════════════════════════════════════════════════
+   辞書データ（vocabulary-master.json から抜粋）
+   タッチポップアップで参照する周辺語の定義
+   ═══════════════════════════════════════════════════ */
+const DICTIONARY = {
+  // ─── 連語・イディオム ───
+  "lens hood": { pos: "n.", meaning: "レンズフード（カメラ用）" },
+  "caused by": { pos: "phrase", meaning: "〜によって生じた" },
+  "stray light": { pos: "n.", meaning: "迷光（光学用語）" },
+  "genetic engineering": { pos: "n.", meaning: "遺伝子工学" },
+  "the manipulation of": { pos: "phrase", meaning: "〜の操作・〜を扱うこと" },
+  "augmented reality": { pos: "n.", meaning: "拡張現実（AR）" },
+  "control system": { pos: "n.", meaning: "制御システム" },
+  "vulnerable to": { pos: "phrase", meaning: "〜に脆弱な・弱い" },
+  "susceptible to": { pos: "phrase", meaning: "〜の影響を受けやすい・〜を起こしやすい" },
+  "under repeated loads": { pos: "phrase", meaning: "繰り返し荷重の下で" },
+  "challenges to": { pos: "phrase", meaning: "〜への課題" },
+  "quantum computing": { pos: "n.", meaning: "量子コンピューティング" },
+  "black hole": { pos: "n.", meaning: "ブラックホール" },
+  "located in": { pos: "phrase", meaning: "〜に位置する" },
+  "less than": { pos: "phrase", meaning: "〜より少ない・〜未満" },
+  "than usual": { pos: "phrase", meaning: "いつもより・通常より" },
+  "in a short time": { pos: "phrase", meaning: "短時間で" },
+  "with six joints": { pos: "phrase", meaning: "6つの関節を持つ" },
+  "driving screws": { pos: "phrase", meaning: "ネジを締めること" },
+  "impact driver": { pos: "n.", meaning: "インパクトドライバー（電動工具）" },
+  "nuclear power plant": { pos: "n.", meaning: "原子力発電所" },
+  "uranium fuel": { pos: "n.", meaning: "ウラン燃料" },
+  "nuclear fission": { pos: "n.", meaning: "核分裂" },
+  "solar panel": { pos: "n.", meaning: "ソーラーパネル" },
+  "weather conditions": { pos: "n.", meaning: "気象条件" },
+  "artificial intelligence": { pos: "n.", meaning: "人工知能・AI" },
+  "numerical value": { pos: "n.", meaning: "数値" },
+  "such as": { pos: "phrase", meaning: "〜などの・〜のような" },
+  "automation system": { pos: "n.", meaning: "自動化システム" },
+  "lubrication system": { pos: "n.", meaning: "注油システム・潤滑システム" },
+  "the need for": { pos: "phrase", meaning: "〜の必要性" },
+  "electronic cigarette": { pos: "n.", meaning: "電子たばこ" },
+  "AB series": { pos: "n.", meaning: "ABシリーズ（製品名）" },
+  "high-speed printing": { pos: "n.", meaning: "高速印刷" },
+  "keyboard shortcut": { pos: "n.", meaning: "キーボードショートカット" },
+  "cloud computing": { pos: "n.", meaning: "クラウドコンピューティング" },
+  "small and medium-sized": { pos: "adj.", meaning: "中小（規模）の" },
+  "solar cell": { pos: "n.", meaning: "太陽電池" },
+  "the number of": { pos: "phrase", meaning: "〜の数" },
+  "energy production": { pos: "n.", meaning: "エネルギー生産" },
+  "e-book reader": { pos: "n.", meaning: "電子書籍リーダー" },
+  "immersion in water": { pos: "phrase", meaning: "水への浸水" },
+  "for the use of": { pos: "phrase", meaning: "〜の使用のために・〜が使う用に" },
+  "arc welding": { pos: "n.", meaning: "アーク溶接" },
+  "electric arc": { pos: "n.", meaning: "電気アーク" },
+  "living organism": { pos: "n.", meaning: "生物・生き物" },
+  "chemical reaction": { pos: "n.", meaning: "化学反応" },
+  "to form": { pos: "phrase", meaning: "〜を形成するために" },
+  "at power plants": { pos: "phrase", meaning: "発電所で" },
+  "have many uses": { pos: "phrase", meaning: "多くの用途がある" },
+
+  // ─── 単独語 ───
+  "flare": { pos: "n.", meaning: "フレア（光のにじみ）" },
+  "manipulation": { pos: "n.", meaning: "操作・処理" },
+  "gene": { pos: "n.", meaning: "遺伝子" },
+  "genes": { pos: "n.", meaning: "遺伝子（複数）" },
+  "virtual": { pos: "adj.", meaning: "仮想の" },
+  "object": { pos: "n.", meaning: "物体・対象" },
+  "objects": { pos: "n.", meaning: "物体（複数）" },
+  "real": { pos: "adj.", meaning: "現実の・実際の" },
+  "environment": { pos: "n.", meaning: "環境" },
+  "old": { pos: "adj.", meaning: "古い" },
+  "industrial": { pos: "adj.", meaning: "産業の・工業の" },
+  "cyberattack": { pos: "n.", meaning: "サイバー攻撃" },
+  "cyberattacks": { pos: "n.", meaning: "サイバー攻撃（複数）" },
+  "compressed": { pos: "adj.", meaning: "圧縮された" },
+  "spring": { pos: "n.", meaning: "ばね・スプリング・春" },
+  "springs": { pos: "n.", meaning: "ばね（複数）" },
+  "fatigue": { pos: "n.", meaning: "疲労" },
+  "repeated": { pos: "adj.", meaning: "繰り返しの" },
+  "load": { pos: "n.", meaning: "荷重・負荷" },
+  "loads": { pos: "n.", meaning: "荷重（複数）" },
+  "challenge": { pos: "n.", meaning: "課題・難題" },
+  "challenges": { pos: "n.", meaning: "課題（複数）" },
+  "practical": { pos: "adj.", meaning: "実用的な・実践的な" },
+  "quantum": { pos: "adj.", meaning: "量子（の）" },
+  "significant": { pos: "adj.", meaning: "重大な・意義深い" },
+  "distant": { pos: "adj.", meaning: "遠方の・遠い" },
+  "galaxy": { pos: "n.", meaning: "銀河" },
+  "billion": { pos: "n.", meaning: "10億" },
+  "km": { pos: "n.", meaning: "キロメートル" },
+  "across": { pos: "prep.", meaning: "横切って・直径で" },
+  "battery": { pos: "n.", meaning: "電池・バッテリー" },
+  "previous": { pos: "adj.", meaning: "以前の・前の" },
+  "model": { pos: "n.", meaning: "モデル・型・機種" },
+  "supermoon": { pos: "n.", meaning: "スーパームーン" },
+  "large": { pos: "adj.", meaning: "大きい" },
+  "larger": { pos: "adj.", meaning: "より大きい（large の比較級）" },
+  "bright": { pos: "adj.", meaning: "明るい" },
+  "brighter": { pos: "adj.", meaning: "より明るい（bright の比較級）" },
+  "testing": { pos: "n.", meaning: "テスト（する）こと" },
+  "software": { pos: "n.", meaning: "ソフトウェア" },
+  "manually": { pos: "adv.", meaning: "手動で・人手で" },
+  "impossible": { pos: "adj.", meaning: "不可能な" },
+  "robot": { pos: "n.", meaning: "ロボット" },
+  "joint": { pos: "n.", meaning: "関節・接合部" },
+  "joints": { pos: "n.", meaning: "関節（複数）" },
+  "human": { pos: "adj.", meaning: "人間の" },
+  "arm": { pos: "n.", meaning: "腕" },
+  "secure": { pos: "adj.", meaning: "安全な・確実な" },
+  "smartphone": { pos: "n.", meaning: "スマートフォン" },
+  "access": { pos: "n.", meaning: "アクセス・接続" },
+  "password": { pos: "n.", meaning: "パスワード" },
+  "passcode": { pos: "n.", meaning: "パスコード" },
+  "common": { pos: "adj.", meaning: "一般的な・共通の" },
+  "tool": { pos: "n.", meaning: "工具・道具" },
+  "tools": { pos: "n.", meaning: "工具（複数）" },
+  "screw": { pos: "n.", meaning: "ネジ" },
+  "screws": { pos: "n.", meaning: "ネジ（複数）" },
+  "screwdriver": { pos: "n.", meaning: "ねじ回し・ドライバー" },
+  "screwdrivers": { pos: "n.", meaning: "ねじ回し（複数）" },
+  "impact": { pos: "n.", meaning: "衝撃・影響" },
+  "drivers": { pos: "n.", meaning: "ドライバー（複数）" },
+  "nuclear": { pos: "adj.", meaning: "核の・原子力の" },
+  "power": { pos: "n.", meaning: "電力・力・能力" },
+  "plant": { pos: "n.", meaning: "発電所・工場・植物" },
+  "plants": { pos: "n.", meaning: "発電所（複数）・植物（複数）" },
+  "uranium": { pos: "n.", meaning: "ウラン" },
+  "fuel": { pos: "n.", meaning: "燃料" },
+  "rooftop": { pos: "adj.", meaning: "屋上の・屋根の" },
+  "solar": { pos: "adj.", meaning: "太陽の" },
+  "panel": { pos: "n.", meaning: "パネル" },
+  "panels": { pos: "n.", meaning: "パネル（複数）" },
+  "extreme": { pos: "adj.", meaning: "厳しい・極端な" },
+  "weather": { pos: "n.", meaning: "天候・気象" },
+  "condition": { pos: "n.", meaning: "条件・状態" },
+  "conditions": { pos: "n.", meaning: "条件（複数）" },
+  "artificial": { pos: "adj.", meaning: "人工の・人為的な" },
+  "intelligence": { pos: "n.", meaning: "知能・知性" },
+  "job": { pos: "n.", meaning: "仕事・職業" },
+  "jobs": { pos: "n.", meaning: "仕事（複数）" },
+  "task": { pos: "n.", meaning: "作業・タスク" },
+  "tasks": { pos: "n.", meaning: "作業（複数）" },
+  "involving": { pos: "v.", meaning: "〜を伴う・含む（involve の現在分詞）" },
+  "numerical": { pos: "adj.", meaning: "数値の" },
+  "values": { pos: "n.", meaning: "値（複数）" },
+  "quantities": { pos: "n.", meaning: "量（複数）" },
+  "length": { pos: "n.", meaning: "長さ" },
+  "distance": { pos: "n.", meaning: "距離" },
+  "density": { pos: "n.", meaning: "密度" },
+  "choose": { pos: "v.", meaning: "〜を選ぶ" },
+  "choosing": { pos: "v.", meaning: "選ぶこと（choose の動名詞）" },
+  "automation": { pos: "n.", meaning: "自動化" },
+  "wiring": { pos: "n.", meaning: "配線" },
+  "cabling": { pos: "n.", meaning: "ケーブル配線" },
+  "lubrication": { pos: "n.", meaning: "潤滑・注油" },
+  "need": { pos: "n.", meaning: "必要・必要性" },
+  "maintenance": { pos: "n.", meaning: "整備・保守" },
+  "electronic": { pos: "adj.", meaning: "電子の" },
+  "cigarette": { pos: "n.", meaning: "たばこ" },
+  "smoking": { pos: "n.", meaning: "喫煙" },
+  "without": { pos: "prep.", meaning: "〜なしで" },
+  "burning": { pos: "v.", meaning: "燃やすこと（burn の動名詞）" },
+  "tobacco": { pos: "n.", meaning: "たばこ（葉）" },
+  "series": { pos: "n.", meaning: "シリーズ" },
+  "printers": { pos: "n.", meaning: "プリンター（複数）" },
+  "high-speed": { pos: "adj.", meaning: "高速の" },
+  "printing": { pos: "n.", meaning: "印刷" },
+  "reliable": { pos: "adj.", meaning: "信頼できる" },
+  "performance": { pos: "n.", meaning: "性能・パフォーマンス" },
+  "table": { pos: "n.", meaning: "表・テーブル" },
+  "keyboard": { pos: "n.", meaning: "キーボード" },
+  "shortcuts": { pos: "n.", meaning: "ショートカット（複数）" },
+  "entering": { pos: "v.", meaning: "入力すること（enter の動名詞）" },
+  "commands": { pos: "n.", meaning: "コマンド（複数）" },
+  "cloud": { pos: "n.", meaning: "クラウド・雲" },
+  "computing": { pos: "n.", meaning: "コンピューティング・計算（科学）" },
+  "medium-sized": { pos: "adj.", meaning: "中規模の" },
+  "companies": { pos: "n.", meaning: "会社（複数）" },
+  "silicon": { pos: "n.", meaning: "シリコン・ケイ素" },
+  "applications": { pos: "n.", meaning: "用途・応用（複数）" },
+  "number": { pos: "n.", meaning: "数" },
+  "connected": { pos: "adj.", meaning: "接続された" },
+  "devices": { pos: "n.", meaning: "デバイス（複数）" },
+  "already": { pos: "adv.", meaning: "すでに" },
+  "far": { pos: "adv.", meaning: "遥かに・はるか" },
+  "global": { pos: "adj.", meaning: "世界の・地球規模の" },
+  "population": { pos: "n.", meaning: "人口" },
+  "diabetic": { pos: "adj.", meaning: "糖尿病の" },
+  "complications": { pos: "n.", meaning: "合併症（複数）" },
+  "unclear": { pos: "adj.", meaning: "不明瞭な・はっきりしない" },
+  "energy": { pos: "n.", meaning: "エネルギー" },
+  "production": { pos: "n.", meaning: "生産" },
+  "efficient": { pos: "adj.", meaning: "効率的な" },
+  "use": { pos: "n.", meaning: "使用・用途" },
+  "resources": { pos: "n.", meaning: "資源（複数）" },
+  "reader": { pos: "n.", meaning: "読み取り装置・読者" },
+  "immersion": { pos: "n.", meaning: "浸水・浸漬" },
+  "water": { pos: "n.", meaning: "水" },
+  "architecture": { pos: "n.", meaning: "構造・アーキテクチャ・建築" },
+  "uses": { pos: "v./n.", meaning: "〜を使う（三単現）／用途（複数）" },
+  "space": { pos: "n.", meaning: "スペース・空間" },
+  "current": { pos: "adj.", meaning: "現在の" },
+  "products": { pos: "n.", meaning: "製品（複数）" },
+  "engineers": { pos: "n.", meaning: "エンジニア・技術者（複数）" },
+  "frequency": { pos: "n.", meaning: "頻度・周波数" },
+  "early": { pos: "adj.", meaning: "早期の・早い" },
+  "diagnosis": { pos: "n.", meaning: "診断" },
+  "prevent": { pos: "v.", meaning: "〜を予防する・防ぐ" },
+  "serious": { pos: "adj.", meaning: "深刻な・重大な" },
+  "radioactive": { pos: "adj.", meaning: "放射性の" },
+  "isotopes": { pos: "n.", meaning: "同位体（複数）" },
+  "industry": { pos: "n.", meaning: "産業・工業" },
+  "medicine": { pos: "n.", meaning: "医療・医学" },
+  "arc": { pos: "n.", meaning: "アーク・弧" },
+  "welding": { pos: "n.", meaning: "溶接" },
+  "striking": { pos: "v.", meaning: "打つこと・発生させること（strike の動名詞）" },
+  "electric": { pos: "adj.", meaning: "電気の" },
+  "between": { pos: "prep.", meaning: "〜の間で" },
+  "workpiece": { pos: "n.", meaning: "加工物" },
+  "living": { pos: "adj.", meaning: "生きている" },
+  "organisms": { pos: "n.", meaning: "生物（複数）" },
+  "survival": { pos: "n.", meaning: "生存" },
+  "chemical": { pos: "adj.", meaning: "化学の" },
+  "reaction": { pos: "n.", meaning: "反応" },
+  "changes": { pos: "n.", meaning: "変化（複数）" },
+  "form": { pos: "v.", meaning: "〜を形成する" },
+  "different": { pos: "adj.", meaning: "異なる・別の" },
+  "substances": { pos: "n.", meaning: "物質（複数）" },
+  "overlays": { pos: "v.", meaning: "〜に重ねる（三単現）" },
+  "onto": { pos: "prep.", meaning: "〜の上に" }
+};
+
+/* ═══════════════════════════════════════════════════
+   クイズデータ（40問）
+   ═══════════════════════════════════════════════════ */
+const QUIZ_DATA = [
+  // 復習セクション
+  { id: "R1", word: "eliminate", pos: "v.", correct: "〜を取り除く／無くす",
+    distractors: ["〜を強化する", "〜を蓄積する", "〜を観察する"],
+    example: "A lens hood can eliminate flare caused by stray light.",
+    example_jp: "レンズフードは迷光によるフレアを取り除くことができる。",
+    review: true, group: "復習" },
+  { id: "R2", word: "involve", pos: "v.", correct: "〜を要する／含む／伴う",
+    distractors: ["〜を分離する", "〜を測定する", "〜を購入する"],
+    example: "Genetic engineering involves the manipulation of an organism's genes.",
+    example_jp: "遺伝子工学は生物の遺伝子を操作することを伴う。",
+    review: true, group: "復習" },
+  { id: "R3", word: "augmented", pos: "adj.", correct: "拡張された",
+    distractors: ["縮小された", "自然の", "制限された"],
+    example: "Augmented reality overlays virtual objects onto the real environment.",
+    example_jp: "拡張現実は仮想物体を現実環境に重ねて表示する。",
+    review: true, group: "復習" },
+  { id: "R4", word: "vulnerable", pos: "adj.", correct: "脆弱な／弱い",
+    distractors: ["頑丈な", "効率的な", "自立した"],
+    example: "Old industrial control systems are vulnerable to cyberattacks.",
+    example_jp: "古い産業制御システムはサイバー攻撃に対して脆弱である。",
+    review: true, group: "復習" },
+  { id: "R5", word: "susceptible", pos: "adj.", correct: "〜を起こしやすい／影響を受けやすい",
+    distractors: ["抵抗力のある", "観察しやすい", "修理しやすい"],
+    example: "Compressed springs are susceptible to fatigue under repeated loads.",
+    example_jp: "圧縮ばねは繰り返し荷重の下で疲労を起こしやすい。",
+    review: true, group: "復習" },
+  // グループA
+  { id: "A1", word: "remain", pos: "v.", correct: "〜のままである／依然として〜である",
+    distractors: ["急速に変化する", "完全に消滅する", "部分的に減少する"],
+    example: "The challenges to practical quantum computing remain significant.",
+    example_jp: "量子コンピュータの実用化への課題は依然として大きい。", group: "A" },
+  { id: "A2", word: "measure", pos: "v.", correct: "〜という寸法である／〜を計測する",
+    distractors: ["〜を覆う", "〜を移動させる", "〜を装飾する"],
+    example: "A black hole located in a distant galaxy measures 40 billion km across.",
+    example_jp: "遠方の銀河に存在するブラックホールは直径400億キロメートルである。", group: "A" },
+  { id: "A3", word: "weigh", pos: "v.", correct: "重さが〜である／〜の重さを量る",
+    distractors: ["高さが〜である", "価値が〜である", "圧力が〜である"],
+    example: "This battery weighs less than the previous model.",
+    example_jp: "このバッテリーは前のモデルよりも軽い。", group: "A" },
+  { id: "A4", word: "appear", pos: "v.", correct: "〜のように見える／現れる",
+    distractors: ["〜のように消える", "〜のように分解する", "〜のように沈む"],
+    example: "A supermoon appears larger and brighter than usual.",
+    example_jp: "スーパームーンは通常時よりも大きく明るく見える。", group: "A" },
+  { id: "A5", word: "seem", pos: "v.", correct: "〜のように思える／〜と思われる",
+    distractors: ["〜と決定する", "〜と発表する", "〜と命令する"],
+    example: "Testing the software manually seems impossible in a short time.",
+    example_jp: "ソフトウェアを人手で短時間にテストすることは不可能と思われる。", group: "A" },
+  { id: "A6", word: "resemble", pos: "v.", correct: "〜に似ている",
+    distractors: ["〜に逆らう", "〜に追いつく", "〜に戻る"],
+    example: "An industrial robot with six joints closely resembles a human arm.",
+    example_jp: "6つの関節を持つ産業用ロボットは人間の腕に酷似している。", group: "A" },
+  { id: "A7", word: "require", pos: "v.", correct: "〜を必要とする／〜を要求する",
+    distractors: ["〜を生産する", "〜を放棄する", "〜を受信する"],
+    example: "Secure smartphone access requires a password or passcode.",
+    example_jp: "スマートフォンに安全にアクセスするには、パスワードまたはパスコードが必要だ。", group: "A" },
+  { id: "A8", word: "include", pos: "v.", correct: "〜を含む",
+    distractors: ["〜を排除する", "〜を分離する", "〜を調整する"],
+    example: "Common tools for driving screws include screwdrivers and impact drivers.",
+    example_jp: "ネジを締めるための一般的な工具には、ねじ回しとインパクトドライバーがある。", group: "A" },
+  { id: "A9", word: "undergo", pos: "v.", correct: "〜を経る／〜を受ける／〜を経験する",
+    distractors: ["〜を妨害する", "〜を予測する", "〜を維持する"],
+    example: "At nuclear power plants, uranium fuel undergoes nuclear fission.",
+    example_jp: "原子力発電所では、ウラン燃料が核分裂反応を起こす。", group: "A" },
+  { id: "A10", word: "withstand", pos: "v.", correct: "〜に耐える／〜に持ちこたえる",
+    distractors: ["〜に屈する", "〜に同意する", "〜に協力する"],
+    example: "Rooftop solar panels can withstand extreme weather conditions.",
+    example_jp: "屋根に設置されるソーラーパネルは厳しい天候に耐えることができる。", group: "A" },
+  // グループB
+  { id: "B1", word: "replace", pos: "v.", correct: "〜に取って代わる／〜を置き換える",
+    distractors: ["〜を分割する", "〜を蓄積する", "〜を表示する"],
+    example: "Artificial intelligence can replace jobs involving repetitive tasks.",
+    example_jp: "繰り返し作業の多い仕事は、AIに取って代わられるだろう。", group: "B" },
+  { id: "B2", word: "represent", pos: "v.", correct: "〜を表す／〜を意味する／〜を代表する",
+    distractors: ["〜を否定する", "〜を予防する", "〜を回転させる"],
+    example: "Numerical values represent quantities such as length, distance, and density.",
+    example_jp: "数値は長さ、距離、密度といった量を表す。", group: "B" },
+  { id: "B3", word: "minimize", pos: "v.", correct: "〜を最小限にする／〜を最小化する",
+    distractors: ["〜を最大化する", "〜を均等にする", "〜を増幅する"],
+    example: "Choosing an automation system can minimize wiring and cabling.",
+    example_jp: "自動化システムを選択することで、配線を最小限に減らすことができる。", group: "B" },
+  { id: "B4", word: "reduce", pos: "v.", correct: "〜を減らす／〜を低減する",
+    distractors: ["〜を強化する", "〜を変換する", "〜を貯蔵する"],
+    example: "An automated lubrication system can reduce the need for maintenance.",
+    example_jp: "自動注油システムを採用すれば、整備の必要性を減らすことができる。", group: "B" },
+  { id: "B5", word: "simulate", pos: "v.", correct: "〜を再現する／〜を模擬する",
+    distractors: ["〜を現実化する", "〜を破壊する", "〜を消去する"],
+    example: "An electronic cigarette simulates smoking without burning tobacco.",
+    example_jp: "電子たばこは、たばこを燃やさずに喫煙の体験を再現する。", group: "B" },
+  { id: "B6", word: "feature", pos: "v./n.", correct: "〜を特徴とする／特徴",
+    distractors: ["〜を欠いている", "〜を隠す", "〜を放棄する"],
+    example: "The AB series printers feature high-speed printing and reliable performance.",
+    example_jp: "ABシリーズのプリンターは高速印刷と信頼性の高い性能を特徴とする。", group: "B" },
+  { id: "B7", word: "list", pos: "v./n.", correct: "〜を列挙する／〜を一覧する／一覧",
+    distractors: ["〜を要約する", "〜を計算する", "〜を撤去する"],
+    example: "Table 1 lists keyboard shortcuts for entering commands.",
+    example_jp: "表1にコマンド入力に使えるショートカットキーの一覧を示す。", group: "B" },
+  { id: "B8", word: "benefit", pos: "v./n.", correct: "〜に利点をもたらす／〜のためになる／利益",
+    distractors: ["〜に損害を与える", "〜を分解する", "〜を妨げる"],
+    example: "Cloud computing benefits small and medium-sized companies.",
+    example_jp: "クラウドコンピューティングは中小企業に利点をもたらす。", group: "B" },
+  { id: "B9", word: "dominate", pos: "v.", correct: "〜の中で優位を占める／〜の主流である",
+    distractors: ["〜に従属する", "〜を回避する", "〜を整理する"],
+    example: "Silicon dominates solar cell applications.",
+    example_jp: "シリコンは太陽電池用途で主流を占めている。", group: "B" },
+  { id: "B10", word: "exceed", pos: "v.", correct: "〜を超える／〜を上回る",
+    distractors: ["〜を下回る", "〜と一致する", "〜より小さくなる"],
+    example: "The number of connected devices already far exceeds the global population.",
+    example_jp: "接続デバイスの数はすでに世界人口を遥かに超えている。", group: "B" },
+  // グループC
+  { id: "C1", word: "underlying", pos: "adj.", correct: "根底にある／基礎をなす",
+    distractors: ["表面的な", "末端の", "偶発的な"],
+    example: "The underlying mechanism of diabetic complications remains unclear.",
+    example_jp: "糖尿病の合併症の根底にあるメカニズムはまだ分かっていない。", group: "C" },
+  { id: "C2", word: "sustainable", pos: "adj.", correct: "持続可能な／持続的な",
+    distractors: ["一時的な", "偶然の", "古典的な"],
+    example: "Sustainable energy production requires efficient use of resources.",
+    example_jp: "持続可能なエネルギー生産は、資源の効率的な利用を必要とする。", group: "C" },
+  { id: "C3", word: "waterproof", pos: "adj.", correct: "防水の",
+    distractors: ["耐火の", "透明な", "抗菌性の"],
+    example: "This waterproof e-book reader can withstand immersion in water.",
+    example_jp: "この防水電子書籍リーダーは水に浸しても耐えられる。", group: "C" },
+  { id: "C4", word: "repetitive", pos: "adj.", correct: "繰り返しの／反復的な",
+    distractors: ["創造的な", "段階的な", "突発的な"],
+    example: "Artificial intelligence can replace jobs involving repetitive tasks.",
+    example_jp: "AIは繰り返し作業の多い仕事に取って代わることができる。", group: "C" },
+  { id: "C5", word: "automated", pos: "adj.", correct: "自動化された／自動の",
+    distractors: ["手動の", "半製品の", "試験段階の"],
+    example: "Our automated lubrication system reduces maintenance frequency.",
+    example_jp: "弊社の自動注油システムは整備の頻度を減らす。", group: "C" },
+  { id: "C6", word: "stacked", pos: "adj.", correct: "積み重ねられた／積層の",
+    distractors: ["平面の", "流動的な", "球形の"],
+    example: "Our stacked architecture uses 90% less space than current products.",
+    example_jp: "弊社の積層構造は、現行製品よりも使用スペースを90%削減する。", group: "C" },
+  { id: "C7", word: "exclusive", pos: "adj.", correct: "専用の／独占的な／排他的な",
+    distractors: ["共有的な", "中立的な", "不確定な"],
+    example: "This software is for the exclusive use of our engineers.",
+    example_jp: "このソフトウェアは弊社エンジニア専用である。", group: "C" },
+  { id: "C8", word: "closely", pos: "adv.", correct: "酷似して／非常によく／密接に",
+    distractors: ["遠くから", "偶然に", "不正確に"],
+    example: "An industrial robot with six joints closely resembles a human arm.",
+    example_jp: "6つの関節を持つ産業用ロボットは人間の腕に酷似している。", group: "C" },
+  // グループD
+  { id: "D1", word: "mechanism", pos: "n.", correct: "メカニズム／仕組み／機構",
+    distractors: ["結果", "仮説", "観察"],
+    example: "The underlying mechanism of diabetic complications remains unclear.",
+    example_jp: "糖尿病の合併症の根底にあるメカニズムはまだ分かっていない。", group: "D" },
+  { id: "D2", word: "complication", pos: "n.", correct: "合併症／複雑な問題",
+    distractors: ["単純な解決策", "標準的な手順", "既知の症状"],
+    example: "Early diagnosis can prevent serious complications.",
+    example_jp: "早期診断は深刻な合併症を予防できる。", group: "D" },
+  { id: "D3", word: "fission", pos: "n.", correct: "核分裂／分裂",
+    distractors: ["核融合", "結晶化", "蒸発"],
+    example: "Uranium fuel undergoes nuclear fission at power plants.",
+    example_jp: "ウラン燃料は発電所で核分裂を起こす。", group: "D" },
+  { id: "D4", word: "isotope", pos: "n.", correct: "同位体／アイソトープ",
+    distractors: ["化合物", "単体", "結晶"],
+    example: "Radioactive isotopes have many uses in industry and medicine.",
+    example_jp: "放射性同位体は産業および医療の分野で多くの用途がある。", group: "D" },
+  { id: "D5", word: "electrode", pos: "n.", correct: "電極",
+    distractors: ["絶縁体", "抵抗器", "配線"],
+    example: "Arc welding involves striking an electric arc between the workpiece and the electrode.",
+    example_jp: "アーク溶接では、加工物と電極の間に電気アークを生じさせる。", group: "D" },
+  { id: "D6", word: "organism", pos: "n.", correct: "生物／有機体",
+    distractors: ["鉱物", "化合物", "装置"],
+    example: "All living organisms require water for survival.",
+    example_jp: "あらゆる生物にとって、水は生存のために不可欠である。", group: "D" },
+  { id: "D7", word: "substance", pos: "n.", correct: "物質",
+    distractors: ["状態", "過程", "振る舞い"],
+    example: "In a chemical reaction, substances undergo changes to form different substances.",
+    example_jp: "化学反応では、複数の物質が変化を経て別の物質になる。", group: "D" }
+];
+
+/* ═══════════════════════════════════════════════════
+   localStorage（artifact内では window.storage 利用も可能だが、
+   localStorage の方がデプロイ後と挙動が同じ）
+   ═══════════════════════════════════════════════════ */
+const STORAGE_KEY = "tech-english-unit02-vocab-v1";
+const loadProgress = () => {
+  try { return JSON.parse(localStorage.getItem(STORAGE_KEY)); } catch { return null; }
+};
+const saveProgress = s => {
+  try { localStorage.setItem(STORAGE_KEY, JSON.stringify(s)); } catch {}
+};
+const clearProgress = () => {
+  try { localStorage.removeItem(STORAGE_KEY); } catch {}
+};
+
+/* ═══════════════════════════════════════════════════
+   useSpeech フック
+   ═══════════════════════════════════════════════════ */
+const useSpeech = () => {
+  const [voices, setVoices] = useState([]);
+  const [speakingId, setSpeakingId] = useState(null);
+  const [rateMode, setRateMode] = useState("normal");
+
+  useEffect(() => {
+    if (!("speechSynthesis" in window)) return;
+    const load = () => setVoices(window.speechSynthesis.getVoices());
+    load();
+    window.speechSynthesis.onvoiceschanged = load;
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  const speak = (text, lang = "en-US", id = "x") => {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    u.rate = rateMode === "slow" ? 0.85 : 1.15;
+    u.pitch = 1.0;
+    const fp = lang === "en-US"
+      ? /female|samantha|victoria|karen|zira|allison|ava|jenny|aria/i
+      : /female|kate|serena|moira|fiona|hazel|susan|emily/i;
+    const v = voices.find(x => x.lang === lang && fp.test(x.name))
+      || voices.find(x => x.lang === lang)
+      || voices.find(x => x.lang.startsWith(lang.slice(0,2)));
+    if (v) u.voice = v;
+    u.onstart = () => setSpeakingId(id);
+    u.onend = () => setSpeakingId(null);
+    u.onerror = () => setSpeakingId(null);
+    window.speechSynthesis.speak(u);
+  };
+  const toggleRate = () => setRateMode(p => p === "normal" ? "slow" : "normal");
+  return { speak, speakingId, rateMode, toggleRate };
+};
+
+/* ═══════════════════════════════════════════════════
+   選択肢のシャッフル（決定的）
+   ═══════════════════════════════════════════════════ */
+const seededShuffle = (arr, seed) => {
+  const a = [...arr];
+  let s = 0;
+  for (let i = 0; i < seed.length; i++) s = (s * 31 + seed.charCodeAt(i)) | 0;
+  const rand = () => { s = (s * 1103515245 + 12345) & 0x7fffffff; return s / 0x7fffffff; };
+  for (let i = a.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [a[i], a[j]] = [a[j], a[i]];
+  }
+  return a;
+};
+
+/* ═══════════════════════════════════════════════════
+   例文中の語をトークン化
+   targetWord はターゲット語（クイズで問う語）→ タッチ不可、強調表示
+   それ以外は辞書を引いてポップアップ表示
+   ═══════════════════════════════════════════════════ */
+const tokenizeExample = (text, targetWord) => {
+  // ターゲット語の屈折形も含めてマッチ（基本形と語幹一致）
+  const targetLower = targetWord.toLowerCase();
+  const targetStem = targetLower.replace(/(e|y)$/, "");
+
+  // まず、複数語の連語を検出して保護する
+  // 連語を長い順にソートして、長い連語から優先的にマッチ
+  const phrases = Object.keys(DICTIONARY)
+    .filter(k => k.includes(" "))
+    .sort((a, b) => b.length - a.length);
+
+  // テキストを分割：連語を【】で囲んで保護
+  let processed = text;
+  const phraseMatches = [];
+  phrases.forEach(phrase => {
+    const re = new RegExp("\\b" + phrase.replace(/[.*+?^${}()|[\]\\]/g, "\\$&") + "\\b", "gi");
+    processed = processed.replace(re, (m) => {
+      const placeholder = `\u0001${phraseMatches.length}\u0001`;
+      phraseMatches.push({ original: m, lookupKey: phrase });
+      return placeholder;
+    });
+  });
+
+  // 単語単位で分割
+  const tokens = processed.split(/(\s+|[.,;!?():"'])/);
+  const result = [];
+
+  tokens.forEach((token, i) => {
+    // プレースホルダ（連語）
+    const phMatch = token.match(/\u0001(\d+)\u0001/);
+    if (phMatch) {
+      const idx = parseInt(phMatch[1]);
+      const { original, lookupKey } = phraseMatches[idx];
+      const dict = DICTIONARY[lookupKey];
+      result.push({
+        type: "phrase",
+        text: original,
+        lookupKey,
+        dict,
+        key: `${i}-p${idx}`
+      });
+      return;
+    }
+
+    // 空白・句読点
+    if (/^\s+$/.test(token) || /^[.,;!?():"']$/.test(token)) {
+      result.push({ type: "punct", text: token, key: `${i}-pn` });
+      return;
+    }
+
+    // 単語
+    const cleaned = token.toLowerCase().replace(/[.,;!?():"']/g, "");
+    if (!cleaned) {
+      result.push({ type: "punct", text: token, key: `${i}-pn2` });
+      return;
+    }
+
+    // ターゲット語判定：完全一致または語幹一致
+    const cleanedStem = cleaned.replace(/(e|y|s|d|ed|ing|es|ies|ied)$/, "");
+    const isTarget = cleaned === targetLower
+      || cleaned === targetLower + "s"
+      || cleaned === targetLower + "es"
+      || cleaned === targetLower + "ed"
+      || cleaned === targetLower + "d"
+      || cleaned === targetLower + "ing"
+      || cleaned === targetLower.replace(/y$/, "ies")
+      || cleaned === targetLower.replace(/y$/, "ied")
+      || cleaned === targetLower.replace(/e$/, "ing")
+      || (targetStem.length >= 4 && cleanedStem === targetStem);
+
+    if (isTarget) {
+      result.push({ type: "target", text: token, key: `${i}-t` });
+      return;
+    }
+
+    // 辞書を引く
+    const dict = DICTIONARY[cleaned];
+    if (dict) {
+      result.push({
+        type: "clickable",
+        text: token,
+        lookupKey: cleaned,
+        dict,
+        key: `${i}-c`
+      });
+    } else {
+      result.push({ type: "plain", text: token, key: `${i}-pl` });
+    }
+  });
+
+  return result;
+};
+
+/* ═══════════════════════════════════════════════════
+   ポップアップ
+   ═══════════════════════════════════════════════════ */
+const Popup = ({ data, position, onClose }) => {
+  const ref = useRef(null);
+  useEffect(() => {
+    const onClick = e => { if (ref.current && !ref.current.contains(e.target)) onClose(); };
+    const onEsc = e => { if (e.key === "Escape") onClose(); };
+    const t = setTimeout(() => {
+      document.addEventListener("click", onClick);
+      document.addEventListener("keydown", onEsc);
+    }, 0);
+    return () => {
+      clearTimeout(t);
+      document.removeEventListener("click", onClick);
+      document.removeEventListener("keydown", onEsc);
+    };
+  }, [onClose]);
+
+  return (
+    <div
+      ref={ref}
+      className="popup"
+      style={{ left: position.x, top: position.y }}
+    >
+      <div>
+        <span className="popup-headword">{data.term}</span>
+        <span className="popup-pos">{data.dict.pos}</span>
+      </div>
+      <div className="popup-meaning">{data.dict.meaning}</div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════
+   音声ボタン
+   ═══════════════════════════════════════════════════ */
+const VoiceButton = ({ text, lang, label, id, speak, speakingId }) => {
+  const isActive = speakingId === id;
+  return (
+    <button
+      onClick={e => { e.stopPropagation(); speak(text, lang, id); }}
+      className={`btn-voice ${isActive ? "active" : ""}`}
+    >
+      <span className="voice-icon">🔊</span>
+      <span>{label}</span>
+    </button>
+  );
+};
+
+/* ═══════════════════════════════════════════════════
+   例文表示（クリック可能語＋ターゲット語強調）
+   ═══════════════════════════════════════════════════ */
+const ExampleSentence = ({ text, targetWord, onWordClick, activeKey }) => {
+  const tokens = useMemo(() => tokenizeExample(text, targetWord), [text, targetWord]);
+
+  return (
+    <div className="text-base leading-relaxed" style={{ color: "var(--ink)", fontFamily: '"Cormorant Garamond", "Hiragino Mincho ProN", serif', fontSize: "19px", fontStyle: "italic", fontWeight: 600 }}>
+      {tokens.map(t => {
+        if (t.type === "punct" || t.type === "plain") {
+          return <span key={t.key}>{t.text}</span>;
+        }
+        if (t.type === "target") {
+          return <span key={t.key} className="target-word">{t.text}</span>;
+        }
+        // clickable or phrase
+        return (
+          <span
+            key={t.key}
+            className={`clickable-word ${activeKey === t.key ? "active" : ""}`}
+            onClick={e => {
+              e.stopPropagation();
+              onWordClick({
+                term: t.lookupKey || t.text,
+                dict: t.dict,
+                key: t.key
+              }, e);
+            }}
+          >
+            {t.text}
+          </span>
+        );
+      })}
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════
+   開始画面
+   ═══════════════════════════════════════════════════ */
+const StartScreen = ({ onStart }) => {
+  const [id, setId] = useState("");
+  const [name, setName] = useState("");
+  return (
+    <div className="max-w-xl mx-auto px-6 py-12">
+      <header className="mb-12 text-center">
+        <div className="font-mono text-xs tracking-[0.3em] uppercase mb-3" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          TECH-English · Unit 2
+        </div>
+        <h1 className="font-display mb-3" style={{ color: "var(--ink)", fontSize: "60px", fontWeight: 700, lineHeight: "1.1" }}>
+          語 彙 訓 練
+        </h1>
+        <div className="text-base" style={{ color: "var(--ink)", fontFamily: '"Cormorant Garamond", serif', fontWeight: 600, fontStyle: "italic" }}>
+          remain · 万能動詞 · 効果的な他動詞
+        </div>
+      </header>
+
+      <div className="ornamental-rule"></div>
+
+      <div className="space-y-6 mb-8">
+        <div>
+          <label className="font-mono text-xs tracking-[0.15em] uppercase block mb-2" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+            出席番号
+          </label>
+          <input
+            type="text"
+            value={id}
+            onChange={e => setId(e.target.value)}
+            className="w-full bg-transparent text-2xl font-display border-b-2 py-2 outline-none"
+            style={{ color: "var(--ink)", borderColor: "var(--ink)", fontWeight: 700 }}
+            placeholder="例: 12"
+          />
+        </div>
+        <div>
+          <label className="font-mono text-xs tracking-[0.15em] uppercase block mb-2" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+            氏 名
+          </label>
+          <input
+            type="text"
+            value={name}
+            onChange={e => setName(e.target.value)}
+            className="w-full bg-transparent text-2xl border-b-2 py-2 outline-none"
+            style={{ color: "var(--ink)", borderColor: "var(--ink)", fontFamily: '"Noto Serif JP", serif', fontWeight: 700 }}
+            placeholder="例: 山田太郎"
+          />
+        </div>
+      </div>
+
+      <button
+        onClick={() => {
+          if (!id.trim() || !name.trim()) {
+            alert("出席番号と氏名を入力してください。");
+            return;
+          }
+          onStart(id.trim(), name.trim());
+        }}
+        className="btn-primary w-full"
+        style={{ fontWeight: 700, fontSize: "20px" }}
+      >
+        ▶ 開 始 す る
+      </button>
+
+      <div className="mt-8 text-base leading-relaxed" style={{ color: "var(--ink)", fontWeight: 500 }}>
+        <p>全 40 問。途中で閉じても続きから再開できます。</p>
+        <p>例文中の<span className="clickable-word" style={{ pointerEvents: "none", fontWeight: 700 }}>下線の語</span>をタッチすると、意味が表示されます。</p>
+        <p>間違えた問題は最後にもう一度出題されます。</p>
+      </div>
+
+      <div className="mt-12 text-center font-mono text-xs tracking-wider" style={{ color: "var(--ink-soft)", fontWeight: 600 }}>
+        © 2026 Kaoruko Takechi · All rights reserved.
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════
+   クイズカード
+   ═══════════════════════════════════════════════════ */
+const QuizCard = ({ vocab, qIdx, total, selected, onSelect, isTeacher, speak, speakingId, onWordClick, activePopupKey }) => {
+  const choices = useMemo(() => {
+    const all = [vocab.correct, ...vocab.distractors];
+    return seededShuffle(all, vocab.id);
+  }, [vocab.id]);
+  const correctIdx = choices.indexOf(vocab.correct);
+  const answered = selected !== undefined && selected !== null;
+
+  return (
+    <article className="mb-12">
+      {/* 問題番号 */}
+      <div className="flex items-center justify-between mb-4">
+        <div className="font-mono text-xs tracking-[0.2em] uppercase" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          № {qIdx + 1} / {total}
+          {vocab.review && <span className="ml-3" style={{ color: "var(--accent)", fontWeight: 700 }}>🔁 復習</span>}
+        </div>
+        <div className="font-mono text-xs" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          Group {vocab.group}
+        </div>
+      </div>
+
+      {/* 単語見出し */}
+      <div className="mb-6 pb-3 border-b-2" style={{ borderColor: "var(--ink-soft)" }}>
+        <div className="flex items-baseline gap-3 flex-wrap mb-3">
+          <h2 className="font-display" style={{ color: "var(--ink)", fontSize: "56px", fontWeight: 700, lineHeight: "1.1" }}>
+            {vocab.word}
+          </h2>
+          <span className="italic font-display" style={{ color: "var(--ink-soft)", fontSize: "18px", fontWeight: 600 }}>
+            {vocab.pos}
+          </span>
+        </div>
+        <div className="flex items-center gap-2 flex-wrap">
+          <span className="font-mono text-xs tracking-[0.15em] uppercase" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+            発音
+          </span>
+          <VoiceButton text={vocab.word} lang="en-US" label="米語" id={`${vocab.id}-w-us`} speak={speak} speakingId={speakingId} />
+          <VoiceButton text={vocab.word} lang="en-GB" label="英語" id={`${vocab.id}-w-gb`} speak={speak} speakingId={speakingId} />
+        </div>
+      </div>
+
+      {/* 例文 */}
+      <div className="mb-6">
+        <div className="font-mono text-xs tracking-[0.15em] uppercase mb-2" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          Example
+        </div>
+        <ExampleSentence
+          text={vocab.example}
+          targetWord={vocab.word}
+          onWordClick={onWordClick}
+          activeKey={activePopupKey}
+        />
+        <div className="flex items-center gap-2 mt-3 mb-2 flex-wrap">
+          <span className="font-mono text-xs tracking-[0.15em] uppercase" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+            音読
+          </span>
+          <VoiceButton text={vocab.example} lang="en-US" label="米語" id={`${vocab.id}-e-us`} speak={speak} speakingId={speakingId} />
+          <VoiceButton text={vocab.example} lang="en-GB" label="英語" id={`${vocab.id}-e-gb`} speak={speak} speakingId={speakingId} />
+        </div>
+        {/* 日本語訳：正解した時のみ表示 */}
+        {answered && selected === correctIdx && (
+          <div className="text-base mt-3 pl-4 border-l-4 py-1" style={{ color: "var(--ink)", borderColor: "var(--accent)", fontWeight: 600 }}>
+            {vocab.example_jp}
+          </div>
+        )}
+        {/* 教員モードでは常に表示 */}
+        {isTeacher && !(answered && selected === correctIdx) && (
+          <div className="text-base mt-3 pl-4 border-l-4 py-1" style={{ color: "var(--teacher)", borderColor: "var(--teacher)", fontWeight: 600 }}>
+            👁 {vocab.example_jp}
+          </div>
+        )}
+      </div>
+
+      {/* 4択 */}
+      <div>
+        <div className="font-mono text-xs tracking-[0.15em] uppercase mb-3" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          意味として最も適切なものは？
+        </div>
+        <div className="space-y-2">
+          {choices.map((ch, i) => {
+            let cls = "choice-btn";
+            if (answered) {
+              if (i === correctIdx) cls += " " + (i === selected ? "correct" : "disabled-correct");
+              else if (i === selected) cls += " wrong";
+              else cls += " disabled-other";
+            }
+            return (
+              <button
+                key={i}
+                onClick={() => !answered && onSelect(i, i === correctIdx)}
+                disabled={answered}
+                className={cls}
+              >
+                <span className="choice-letter">{["i", "ii", "iii", "iv"][i]}</span>
+                {ch}
+                {answered && i === correctIdx && <span className="ml-2 font-mono text-xs" style={{ fontWeight: 700 }}>✓</span>}
+                {answered && i === selected && i !== correctIdx && <span className="ml-2 font-mono text-xs" style={{ fontWeight: 700 }}>✗</span>}
+              </button>
+            );
+          })}
+        </div>
+        {isTeacher && !answered && (
+          <div className="mt-3 font-mono text-sm px-3 py-2 border-2" style={{ background: "#fdf4ff", borderColor: "var(--teacher)", color: "var(--teacher)", fontWeight: 700 }}>
+            👁 正解 {["i", "ii", "iii", "iv"][correctIdx]} · {vocab.correct}
+          </div>
+        )}
+      </div>
+    </article>
+  );
+};
+
+/* ═══════════════════════════════════════════════════
+   結果画面
+   ═══════════════════════════════════════════════════ */
+const ResultScreen = ({ studentId, studentName, answers, onRetry, onReviewWrong }) => {
+  const correctCount = Object.values(answers).filter(a => a.correct).length;
+  const total = QUIZ_DATA.length;
+  const wrongIds = Object.entries(answers).filter(([k, v]) => !v.correct).map(([k]) => k);
+  const score = Math.round((correctCount / total) * 100);
+
+  return (
+    <div className="max-w-xl mx-auto px-6 py-12">
+      <div className="text-center mb-8">
+        <div className="font-mono text-sm tracking-[0.3em] uppercase mb-4" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          Result
+        </div>
+        <div className="font-display mb-2" style={{ color: "var(--ink)", fontSize: "84px", fontWeight: 700, lineHeight: "1" }}>
+          {correctCount} <span style={{ color: "var(--ink-soft)" }}>/</span> {total}
+        </div>
+        <div className="font-display text-4xl" style={{ color: "var(--accent)", fontWeight: 700 }}>
+          {score}%
+        </div>
+        <div className="ornamental-rule mt-6"></div>
+        <div className="text-base" style={{ color: "var(--ink)", fontWeight: 600 }}>
+          出席番号 <span className="font-display text-xl" style={{ fontWeight: 700 }}>{studentId}</span> ／ {studentName}
+        </div>
+      </div>
+
+      {wrongIds.length > 0 && (
+        <button
+          onClick={onReviewWrong}
+          className="btn-primary w-full mb-4"
+          style={{ background: "var(--accent)", fontWeight: 700, fontSize: "20px" }}
+        >
+          📝 間違えた {wrongIds.length} 問を再挑戦
+        </button>
+      )}
+
+      <div className="border-2 p-5 mb-4" style={{ background: "var(--paper-light)", borderColor: "var(--ink-soft)" }}>
+        <div className="font-mono text-sm tracking-[0.15em] uppercase mb-2" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          📸 提出方法
+        </div>
+        <div className="text-base leading-relaxed" style={{ color: "var(--ink)", fontWeight: 600 }}>
+          この画面のスクリーンショットを撮って、Google Classroom の課題提出欄にアップロードしてください。
+        </div>
+      </div>
+
+      <button onClick={onRetry} className="btn-primary w-full" style={{ background: "var(--ink-soft)", fontWeight: 700, fontSize: "18px" }}>
+        🔄 最初からやり直す
+      </button>
+
+      <div className="mt-12 text-center font-mono text-xs tracking-wider" style={{ color: "var(--ink-soft)", fontWeight: 600 }}>
+        © 2026 Kaoruko Takechi · All rights reserved.
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════
+   Reset モーダル
+   ═══════════════════════════════════════════════════ */
+const ResetModal = ({ onConfirm, onCancel }) => (
+  <div
+    className="fixed inset-0 z-50 flex items-center justify-center p-4"
+    style={{ background: "rgba(0,0,0,0.5)" }}
+    onClick={onCancel}
+  >
+    <div
+      className="max-w-sm w-full p-6"
+      style={{ background: "var(--paper)", border: "2px solid var(--ink)" }}
+      onClick={e => e.stopPropagation()}
+    >
+      <h2 className="font-display text-2xl mb-3" style={{ color: "var(--ink)" }}>
+        進捗をリセットしますか？
+      </h2>
+      <p className="text-sm mb-6 leading-relaxed" style={{ color: "var(--ink-soft)" }}>
+        保存された解答状況がすべて削除され、最初の画面に戻ります。この操作は取り消せません。
+      </p>
+      <div className="flex gap-2">
+        <button onClick={onCancel} className="flex-1 chip" style={{ padding: "10px" }}>キャンセル</button>
+        <button onClick={onConfirm} className="flex-1 chip" style={{ background: "var(--wrong)", color: "white", borderColor: "var(--wrong)", padding: "10px" }}>リセット</button>
+      </div>
+    </div>
+  </div>
+);
+
+/* ═══════════════════════════════════════════════════
+   ランディング画面（最初の選択画面）
+   ═══════════════════════════════════════════════════ */
+const LandingScreen = ({ onSelectPractice, onSelectVocab }) => {
+  return (
+    <div className="max-w-3xl mx-auto px-4 sm:px-6 py-8 sm:py-12">
+      <header className="mb-10 pb-4 border-b-2" style={{ borderColor: "var(--ink)" }}>
+        <div className="font-mono text-xs tracking-[0.3em] uppercase mb-2" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          TECHNICAL ENGLISH · Unit 2
+        </div>
+        <h1 className="font-display" style={{ color: "var(--ink)", fontSize: "44px", fontWeight: 700, lineHeight: "1.1" }}>
+          技術英語トレーニング
+        </h1>
+      </header>
+
+      <div className="mb-8">
+        <div className="font-mono text-xs tracking-[0.25em] uppercase mb-2" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          WELCOME
+        </div>
+        <h2 className="font-display mb-4" style={{ color: "var(--ink)", fontSize: "28px", fontWeight: 700 }}>
+          2 種類のトレーニングから選ぼう
+        </h2>
+        <p className="text-base leading-relaxed" style={{ color: "var(--ink)", fontWeight: 500 }}>
+          技術英語の基本となる「文構造の作り方」と「頻出語彙」を、自習で身につけるためのオンライン練習アプリです。
+          どちらもスマートフォン・タブレット・パソコンで動作し、途中で閉じても進捗は自動保存されます。
+        </p>
+      </div>
+
+      {/* 2 つのカード */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mb-10">
+        {/* PRACTICE 01 */}
+        <div className="landing-card practice" onClick={onSelectPractice}>
+          <div className="landing-card-header">
+            <span>PRACTICE</span>
+            <span>01</span>
+          </div>
+          <h3 className="font-display mb-3" style={{ color: "var(--ink)", fontSize: "26px", fontWeight: 700 }}>
+            文構造トレーニング
+          </h3>
+          <p className="text-sm leading-relaxed mb-5" style={{ color: "var(--ink-soft)", fontWeight: 500 }}>
+            be動詞のSVCを越え、自動詞のSVC・万能動詞SVO・効果的な他動詞による技術英語の文構造を、20問の練習で身につける。多肢選択12問と記述8問で構成。
+          </p>
+          <div className="flex justify-between items-center">
+            <span className="font-mono text-xs" style={{ color: "var(--ink-soft)", fontWeight: 600 }}>
+              全 20 問 · 約 25 分
+            </span>
+            <span className="font-mono text-sm" style={{ color: "var(--accent)", fontWeight: 700 }}>
+              開始する →
+            </span>
+          </div>
+        </div>
+
+        {/* VOCABULARY 02 */}
+        <div className="landing-card vocab" onClick={onSelectVocab}>
+          <div className="landing-card-header">
+            <span>VOCABULARY</span>
+            <span>02</span>
+          </div>
+          <h3 className="font-display mb-3" style={{ color: "var(--ink)", fontSize: "26px", fontWeight: 700 }}>
+            語彙トレーニング
+          </h3>
+          <p className="text-sm leading-relaxed mb-5" style={{ color: "var(--ink-soft)", fontWeight: 500 }}>
+            技術英語の重要語彙 35 語と復習 5 語を、4 択の意味選択クイズで学習する。動詞・形容詞・専門用語・名詞の 4 グループに分類。各語に新規の例文あり。
+          </p>
+          <div className="flex justify-between items-center">
+            <span className="font-mono text-xs" style={{ color: "var(--ink-soft)", fontWeight: 600 }}>
+              全 40 問 · 約 25 分
+            </span>
+            <span className="font-mono text-sm" style={{ color: "var(--accent)", fontWeight: 700 }}>
+              開始する →
+            </span>
+          </div>
+        </div>
+      </div>
+
+      {/* 使い方 */}
+      <div className="border-2 p-5 mb-6" style={{ background: "var(--paper-light)", borderColor: "var(--rule)" }}>
+        <div className="font-mono text-xs tracking-[0.15em] uppercase mb-3" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          使い方
+        </div>
+        <ol className="space-y-2 text-base" style={{ color: "var(--ink)", fontWeight: 500 }}>
+          <li>1. 上のカードから始めたいトレーニングを選ぶ</li>
+          <li>2. 最初の画面で出席番号と氏名を入力する</li>
+          <li>3. 問題を進める（途中で閉じても OK。次回は続きから始まる）</li>
+          <li>4. 最終画面のスクリーンショットを撮って Google Classroom に提出する</li>
+        </ol>
+      </div>
+
+      <div className="border-l-8 pl-4 py-3" style={{ background: "#1f1a14", borderColor: "var(--accent)" }}>
+        <div className="font-mono text-xs tracking-[0.15em] uppercase mb-1" style={{ color: "#fbbf24", fontWeight: 700 }}>
+          動作環境
+        </div>
+        <p className="text-sm leading-relaxed" style={{ color: "var(--paper)", fontWeight: 500 }}>
+          最新の Chrome・Safari・Edge・Firefox で動作します。進捗データはブラウザ内に保存されます（ブラウザ履歴や Cookie を削除すると進捗もリセットされる点に注意）。
+        </p>
+      </div>
+
+      <div className="mt-10 text-center font-mono text-xs tracking-wider" style={{ color: "var(--ink-soft)", fontWeight: 600 }}>
+        © 2026 Kaoruko Takechi · All rights reserved.
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════
+   文構造練習データ（20問）
+   多肢選択12 + 記述8
+   ═══════════════════════════════════════════════════ */
+const PRACTICE_DATA = [
+  // セクション 2-1: remain 他のSVC
+  {
+    id: "P-Q1", type: "MC", section: "2-1", sectionTitle: "remain 他のSVC",
+    jp: "量子コンピュータの実用化への課題は依然として大きい。",
+    question: "次の日本語を SVC で表すとき、最も自然で簡潔な英文は？",
+    correct: "The challenges to practical quantum computing remain significant.",
+    distractors: [
+      "The challenges to practical quantum computing are still not small.",
+      "The challenges to practical quantum computing have not become small."
+    ],
+    explanation: "`remain + 形容詞` で「〜のままである」を表すと簡潔・明快。否定形 `not small` を使う冗長な表現は技術英語では避ける。"
+  },
+  {
+    id: "P-Q2", type: "MC", section: "2-1", sectionTitle: "remain 他のSVC",
+    jp: "この合金板は厚みが 0.5 ミリある。",
+    question: "次の日本語を自動詞 measure を使った SVC で表すとき、空所に入る最も適切な形は？",
+    blankSentence: "This alloy sheet ___ 0.5 millimeters in thickness.",
+    correct: "measures",
+    distractors: ["is measured", "measures up to"],
+    explanation: "自動詞 `measure`（〜という寸法である）は前置詞なしで直接、寸法を表す。`is measured` は受け身で意味が変わる。`measures up to` は最大値のニュアンスで確定値には不適切。"
+  },
+  {
+    id: "P-Q3", type: "MC", section: "2-1", sectionTitle: "remain 他のSVC",
+    jp: "DNA分子はねじれたはしごのような形をしている。",
+    question: "より簡潔で技術英語として適切な表現はどちらか？",
+    correct: "The DNA molecule resembles a twisted ladder.",
+    distractors: ["The DNA molecule looks similar to a twisted ladder."],
+    explanation: "他動詞 `resemble` 1語で「〜に似ている」を表せる。`look similar to` は3語必要。"
+  },
+  {
+    id: "P-Q4", type: "W", section: "2-1", sectionTitle: "remain 他のSVC",
+    jp: "この防水デバイスは深さ100メートルまでの水圧に耐えることができる。",
+    hint: "他動詞 `withstand`（〜に耐える）を使う。「深さ100メートルでの水圧」＝ water pressure at depths of up to 100 meters。",
+    hints: ["w_t_rpr__f ＝ 防水の", "d_v_ce ＝ デバイス", "w_thst_nd ＝ 〜に耐える", "w_t_r pr_ss_re ＝ 水圧", "d_pths ＝ 深さ（複数形）"],
+    answer: "This waterproof device can withstand water pressure at depths of up to 100 meters.",
+    note: "深さに関する前置詞句は `at depths of up to ...` が最も自然で、水圧との関係も明確になる。"
+  },
+  {
+    id: "P-Q5", type: "W", section: "2-1", sectionTitle: "remain 他のSVC",
+    jp: "この産業用ロボットの腕は人間の腕に酷似している。",
+    hint: "他動詞 `resemble`（〜に似ている）を使い、副詞 `closely`（密接に・酷似して）を加える。",
+    hints: ["in_ustr_al r_b_t ＝ 産業用ロボット", "_rm ＝ 腕", "cl_s_ly ＝ 酷似して", "res_mbl_s ＝ 〜に似ている（三単現）", "h_man ＝ 人間の"],
+    answer: "The arm of this industrial robot closely resembles a human arm.",
+    note: "be similar to を避けて resemble 一語で表現することがポイント。"
+  },
+  // セクション 2-2: 万能動詞
+  {
+    id: "P-Q6", type: "MC", section: "2-2", sectionTitle: "万能動詞 have/include/require",
+    jp: "ABシリーズのプリンターは高速性能と同類最小サイズという特徴をもつ。",
+    question: "次の日本語を「特徴をもつ」を表す万能動詞で表すとき、最も自然な英文は？",
+    correct: "The AB series printers have high-speed performance and the smallest size in their class.",
+    distractors: [
+      "The AB series printers include high-speed performance and the smallest size in their class.",
+      "The AB series printers require high-speed performance and the smallest size in their class."
+    ],
+    explanation: "`have` は「特徴・属性を有する」場合に使う万能動詞。`include` は「〜などを含む」、`require` は「〜を必要とする」で文意が変わる。"
+  },
+  {
+    id: "P-Q7", type: "MC", section: "2-2", sectionTitle: "万能動詞 have/include/require",
+    jp: "多くのIoT機器はデータ伝送のための無線チップを必要とする。",
+    question: "空所に入る動詞として最も適切なものは？",
+    blankSentence: "Many IoT devices ___ a wireless chip for data transmission.",
+    correct: "require",
+    distractors: ["have", "use"],
+    explanation: "「〜を必要とする」は `require`。`have` は所有のニュアンスで必要性が弱い。`use` は「使う」で必要不可欠性が表現できない。"
+  },
+  {
+    id: "P-Q8", type: "MC", section: "2-2", sectionTitle: "万能動詞 have/include/require",
+    jp: "頭部装着ディスプレー（HMD）にはゲーム、医療、エンジニアリングなど多くの用途がある。",
+    question: "have many uses を使って、より簡潔に表した英文はどれか？",
+    correct: "Head-mounted displays (HMDs) have many uses, including gaming, medicine, and engineering.",
+    distractors: [
+      "Head-mounted displays (HMDs) can be used in many fields, like gaming, medicine, and engineering.",
+      "There are many uses of head-mounted displays (HMDs), and they include gaming, medicine, and engineering."
+    ],
+    explanation: "`have many uses` は「多くの用途がある」を最も簡潔に表す定番表現。例示の `including` も自然。"
+  },
+  {
+    id: "P-Q9", type: "W", section: "2-2", sectionTitle: "万能動詞 have/include/require",
+    jp: "この医療用センサーは赤外線で患者の体温を継続的に監視する。",
+    hint: "万能動詞 `use`（〜を使う）を活かして、無生物主語 SVO で表す。「継続的に」＝ continuously、「赤外線」＝ infrared light。",
+    hints: ["m_dic_l s_ns_r ＝ 医療用センサー", "_ses ＝ 〜を使う（三単現）", "_nfr_red l_ght ＝ 赤外線", "m_n_t_r ＝ 〜を監視する", "p_t__nt ＝ 患者", "b_dy t_mp_r_t_re ＝ 体温"],
+    answer: "This medical sensor uses infrared light to monitor a patient's body temperature continuously.",
+    note: "`uses ... to ...` で「〜を使って〜する」を表現できる。副詞 continuously は不定詞句の後ろに置くと文全体がすっきりする。"
+  },
+  {
+    id: "P-Q10", type: "W", section: "2-2", sectionTitle: "万能動詞 have/include/require",
+    jp: "すべての精油は使用前に希釈する必要がある。",
+    hint: "受け身 `need to be diluted` を避けて、能動態の `require + 名詞` で表す。「希釈」＝ dilution、「使用前」＝ before use。",
+    hints: ["_ss_nt__l _ils ＝ 精油", "r_q__re ＝ 〜を必要とする", "d_l_t__n ＝ 希釈", "b_f_re _se ＝ 使用前"],
+    answer: "All essential oils require dilution before use.",
+    note: "受け身の need to be diluted を避けて、`require + 名詞` で簡潔に表現する。"
+  },
+  // セクション 2-3: 効果的な他動詞
+  {
+    id: "P-Q11", type: "MC", section: "2-3", sectionTitle: "効果的な他動詞",
+    jp: "オンライン動画はテレビ視聴に部分的に取って代わった。",
+    question: "次の日本語を1語の他動詞で表すとき、最も自然な英文は？",
+    correct: "Online videos have partly replaced traditional TV viewing.",
+    distractors: [
+      "Online videos took the place of TV viewing.",
+      "Online videos became the alternative to TV viewing."
+    ],
+    explanation: "`take the place of`（3語の群動詞）を1語の他動詞 `replace` で置き換える。現在完了形 `have replaced` で「すでに置き換わってきている」状態を表す。"
+  },
+  {
+    id: "P-Q12", type: "MC", section: "2-3", sectionTitle: "効果的な他動詞",
+    jp: "GPS の活用により、ドローン配送ルートの計画時間を最小限にできた。",
+    question: "空所に入る動詞として最も適切なものは？",
+    blankSentence: "Using GPS has ___ the planning time for drone delivery routes.",
+    correct: "minimized",
+    distractors: ["made the smallest of", "reduced minimum"],
+    explanation: "1語の他動詞 `minimize` で「〜を最小限にする」を表せる。"
+  },
+  {
+    id: "P-Q13", type: "MC", section: "2-3", sectionTitle: "効果的な他動詞",
+    jp: "クラウドコンピューティングは中小企業に利点をもたらす。",
+    question: "より簡潔で技術英語として適切な表現はどちらか？",
+    correct: "Cloud computing benefits small and medium-sized companies.",
+    distractors: ["Cloud computing brings benefits to small and medium-sized companies."],
+    explanation: "名詞 `benefit` は他動詞としても使える。`bring benefits to`（3語の群動詞）を `benefit`（1語の他動詞）で置き換えると簡潔になる。"
+  },
+  {
+    id: "P-Q14", type: "W", section: "2-3", sectionTitle: "効果的な他動詞",
+    jp: "チタニウムを他の金属と混ぜて合金にすることで、その材料の強度を増すことができる。",
+    hint: "名詞 `alloy`（合金）を他動詞として使う。「強度を増す」＝ increase the material's strength。",
+    hints: ["T_t_n_um ＝ チタニウム", "_ll_yed ＝ 〜と合金にする（過去分詞）", "_th_r m_t_ls ＝ 他の金属", "m_t_r__l's str_ngth ＝ 材料の強度"],
+    answer: "Titanium can be alloyed with other metals to increase the material's strength.",
+    note: "`alloy` を他動詞として使うのがポイント。`form an alloy with` という群動詞を避ける。"
+  },
+  {
+    id: "P-Q15", type: "W", section: "2-3", sectionTitle: "効果的な他動詞",
+    jp: "IoT機器の数はすでに人類の人口を遥かに超えている。",
+    hint: "他動詞 `outnumber`（〜より数が多い）または `exceed`（〜を超える）を使う。「遥かに」＝ far、「人類の人口」＝ the human population。",
+    hints: ["I_T d_v_ces ＝ IoT機器", "_utn_mb_r ＝ 〜より数が多い", "f_r ＝ 遥かに", "h_m_n p_p_l_t__n ＝ 人類の人口"],
+    answer: "IoT devices already far outnumber the human population.",
+    acceptableAlternatives: ["IoT devices already far exceed the human population."],
+    note: "「数が多い」を明確に表すには `outnumber` が最適。`exceed` も可。be 動詞構文を避けて1語で表現する。"
+  },
+  // セクション 2-4: 名詞→動詞化
+  {
+    id: "P-Q16", type: "MC", section: "2-4", sectionTitle: "名詞→動詞化",
+    jp: "原子力発電所では、ウラン燃料が核分裂反応を起こし、それによって大量の熱が発生する。",
+    question: "「核分裂反応を起こす」を表すために空所に入れる最も適切な動詞は？",
+    blankSentence: "At nuclear power plants, uranium fuel ___ nuclear fission, generating a large amount of heat.",
+    correct: "undergoes",
+    distractors: ["experiences", "has"],
+    explanation: "`undergo nuclear fission`（核分裂を経る・起こす）は化学・物理現象の定型表現。後続の分詞構文 `generating ...` で熱発生を自然に表現。"
+  },
+  {
+    id: "P-Q17", type: "MC", section: "2-4", sectionTitle: "名詞→動詞化",
+    jp: "表1にコマンド入力に使えるショートカットキーの一覧を示す。",
+    question: "空所に入る動詞として最も適切なものは？",
+    blankSentence: "Table 1 ___ keyboard shortcuts for entering commands.",
+    correct: "lists",
+    distractors: ["shows a list of", "has a listing of"],
+    explanation: "名詞 `list` は他動詞「〜を一覧する」としても使える。"
+  },
+  {
+    id: "P-Q18", type: "MC", section: "2-4", sectionTitle: "名詞→動詞化",
+    jp: "シリコンは太陽電池用途で主流を占めている。",
+    question: "より簡潔で技術英語として適切な表現は？",
+    correct: "Silicon dominates solar cell applications.",
+    distractors: [
+      "Silicon is an important material in solar cell applications.",
+      "Silicon plays a major role in solar cell applications."
+    ],
+    explanation: "`dominate`（〜の中で優位を占める／主流を占める）1語で表現できる。「重要である」より一段強い意味を持つ。"
+  },
+  {
+    id: "P-Q19", type: "W", section: "2-4", sectionTitle: "名詞→動詞化",
+    jp: "この新型テレビはゲーム機やデジタルビデオレコーダーとのシームレスな統合を特徴とする。",
+    hint: "名詞 `feature`（特徴）を他動詞として使う。「シームレスな統合」＝ seamless integration。",
+    hints: ["n_w T_ m_d_l ＝ 新型テレビ", "f__t_res ＝ 〜を特徴とする（三単現）", "s__ml_ss _nt_gr_t__n ＝ シームレスな統合", "g_m_ c_ns_les ＝ ゲーム機", "d_g_t_l v_d_o r_c_rders ＝ デジタルビデオレコーダー"],
+    answer: "This new TV model features seamless integration with game consoles and digital video recorders.",
+    note: "名詞 `feature` を他動詞として使うのがポイント。"
+  },
+  {
+    id: "P-Q20", type: "W", section: "2-4", sectionTitle: "名詞→動詞化",
+    jp: "化学反応では、物質が化学変化を経て別の物質になる。",
+    hint: "他動詞 `undergo`（〜を経る・受ける）を使う。「化学反応」＝ chemical reaction、「化学変化」＝ chemical changes（複数形）。",
+    hints: ["ch_m_c_l r__ct__n ＝ 化学反応", "s_bst_nces ＝ 物質（複数形）", "_ndergo ＝ 〜を経る・受ける", "f_rm ＝ 形成する", "d_ff_rent s_bst_nces ＝ 別の物質（複数形）"],
+    answer: "In a chemical reaction, substances undergo chemical changes to form different substances.",
+    note: "`undergo` を使うと、変化を受ける物質を主語にして、受け身を使わずに化学変化を表せる。"
+  }
+];
+
+/* ═══════════════════════════════════════════════════
+   文構造練習用 localStorage
+   ═══════════════════════════════════════════════════ */
+const PRACTICE_STORAGE_KEY = "tech-english-unit02-practice-v1";
+const loadPracticeProgress = () => {
+  try { return JSON.parse(localStorage.getItem(PRACTICE_STORAGE_KEY)); } catch { return null; }
+};
+const savePracticeProgress = s => {
+  try { localStorage.setItem(PRACTICE_STORAGE_KEY, JSON.stringify(s)); } catch {}
+};
+const clearPracticeProgress = () => {
+  try { localStorage.removeItem(PRACTICE_STORAGE_KEY); } catch {}
+};
+
+/* ═══════════════════════════════════════════════════
+   文構造練習：多肢選択カード
+   ═══════════════════════════════════════════════════ */
+const PracticeMCCard = ({ q, qIdx, total, selected, onSelect, isTeacher, speak, speakingId }) => {
+  const choices = useMemo(() => {
+    const all = [q.correct, ...q.distractors];
+    return seededShuffle(all, q.id);
+  }, [q.id]);
+  const correctIdx = choices.indexOf(q.correct);
+  const answered = selected !== undefined && selected !== null;
+
+  return (
+    <article className="mb-12">
+      <div className="flex items-center justify-between mb-4">
+        <div className="font-mono text-xs tracking-[0.2em] uppercase" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          № {qIdx + 1} / {total} · MC
+        </div>
+        <div className="font-mono text-xs" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          {q.section}
+        </div>
+      </div>
+
+      {/* 日本語 */}
+      <div className="mb-5 pb-3 border-b-2" style={{ borderColor: "var(--ink-soft)" }}>
+        <div className="font-mono text-xs tracking-[0.15em] uppercase mb-2" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          日 本 語
+        </div>
+        <div className="text-lg leading-relaxed" style={{ color: "var(--ink)", fontWeight: 600 }}>
+          {q.jp}
+        </div>
+      </div>
+
+      {/* 問い */}
+      <div className="mb-4">
+        <div className="font-mono text-xs tracking-[0.15em] uppercase mb-2" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          問 い
+        </div>
+        <div className="text-base mb-3" style={{ color: "var(--ink)", fontWeight: 600 }}>
+          {q.question}
+        </div>
+        {q.blankSentence && (
+          <div className="p-3 my-3" style={{ background: "var(--paper-light)", border: "1.5px solid var(--rule)", fontFamily: '"Cormorant Garamond", serif', fontSize: "18px", fontStyle: "italic", color: "var(--ink)", fontWeight: 600 }}>
+            {q.blankSentence}
+            <span className="inline-flex gap-1 ml-2">
+              <VoiceButton text={q.blankSentence.replace(/___/g, q.correct)} lang="en-US" label="米語" id={`${q.id}-blank-us`} speak={speak} speakingId={speakingId} />
+            </span>
+          </div>
+        )}
+      </div>
+
+      {/* 4択 */}
+      <div className="space-y-2">
+        {choices.map((ch, i) => {
+          let cls = "choice-btn";
+          if (answered) {
+            if (i === correctIdx) cls += " " + (i === selected ? "correct" : "disabled-correct");
+            else if (i === selected) cls += " wrong";
+            else cls += " disabled-other";
+          }
+          return (
+            <button
+              key={i}
+              onClick={() => !answered && onSelect(i, i === correctIdx)}
+              disabled={answered}
+              className={cls}
+            >
+              <span className="choice-letter">{["i", "ii", "iii", "iv"][i]}</span>
+              <span style={{ fontFamily: '"Cormorant Garamond", "Hiragino Mincho ProN", serif', fontStyle: q.blankSentence ? "normal" : "italic" }}>{ch}</span>
+              {answered && i === correctIdx && <span className="ml-2 font-mono text-xs" style={{ fontWeight: 700 }}>✓</span>}
+              {answered && i === selected && i !== correctIdx && <span className="ml-2 font-mono text-xs" style={{ fontWeight: 700 }}>✗</span>}
+            </button>
+          );
+        })}
+      </div>
+
+      {/* 解説：正解時表示 */}
+      {answered && selected === correctIdx && (
+        <div className="mt-4 p-4 border-l-4" style={{ background: "var(--correct-bg)", borderColor: "var(--correct)" }}>
+          <div className="font-mono text-xs tracking-wider uppercase mb-2" style={{ color: "var(--correct)", fontWeight: 700 }}>解 説</div>
+          <div className="text-sm leading-relaxed" style={{ color: "var(--ink)", fontWeight: 500 }}>{q.explanation}</div>
+        </div>
+      )}
+
+      {/* 教員モード */}
+      {isTeacher && !answered && (
+        <div className="mt-3 font-mono text-sm px-3 py-2 border-2" style={{ background: "#fdf4ff", borderColor: "var(--teacher)", color: "var(--teacher)", fontWeight: 700 }}>
+          👁 正解 {["i", "ii", "iii", "iv"][correctIdx]}
+        </div>
+      )}
+    </article>
+  );
+};
+
+/* ═══════════════════════════════════════════════════
+   文構造練習：記述カード
+   学生が記述 → 「採点する」→ 模範解答との比較表示 → 自己評価
+   ═══════════════════════════════════════════════════ */
+const PracticeWCard = ({ q, qIdx, total, state, onSubmit, onSelfAssess, isTeacher, speak, speakingId }) => {
+  const [text, setText] = useState(state?.text || "");
+  const [showAnswer, setShowAnswer] = useState(state?.submitted || false);
+
+  useEffect(() => {
+    setText(state?.text || "");
+    setShowAnswer(state?.submitted || false);
+  }, [state, q.id]);
+
+  const handleSubmit = () => {
+    if (!text.trim()) {
+      alert("解答を入力してから採点してください。");
+      return;
+    }
+    setShowAnswer(true);
+    onSubmit(text);
+  };
+
+  const selfAssessed = state?.assessment !== undefined;
+
+  return (
+    <article className="mb-12">
+      <div className="flex items-center justify-between mb-4">
+        <div className="font-mono text-xs tracking-[0.2em] uppercase" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          № {qIdx + 1} / {total} · WRITING
+        </div>
+        <div className="font-mono text-xs" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          {q.section}
+        </div>
+      </div>
+
+      {/* 日本語 */}
+      <div className="mb-5 pb-3 border-b-2" style={{ borderColor: "var(--ink-soft)" }}>
+        <div className="font-mono text-xs tracking-[0.15em] uppercase mb-2" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          日 本 語 を 英 訳 す る
+        </div>
+        <div className="text-lg leading-relaxed" style={{ color: "var(--ink)", fontWeight: 600 }}>
+          {q.jp}
+        </div>
+      </div>
+
+      {/* ヒント */}
+      <div className="mb-4 p-3" style={{ background: "var(--paper-light)", border: "1.5px solid var(--rule)" }}>
+        <div className="font-mono text-xs tracking-[0.15em] uppercase mb-2" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          💡 ヒント
+        </div>
+        <div className="text-sm mb-2" style={{ color: "var(--ink)", fontWeight: 500 }}>{q.hint}</div>
+        {q.hints && (
+          <div className="space-y-1 mt-2">
+            {q.hints.map((h, i) => (
+              <div key={i} className="font-mono text-xs" style={{ color: "var(--ink)", fontWeight: 600 }}>
+                · {h}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
+      {/* 記述欄 */}
+      <div className="mb-4">
+        <div className="font-mono text-xs tracking-[0.15em] uppercase mb-2" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          あ な た の 解 答
+        </div>
+        <textarea
+          value={text}
+          onChange={e => setText(e.target.value)}
+          disabled={showAnswer}
+          rows={3}
+          className="w-full p-3"
+          style={{
+            background: showAnswer ? "var(--paper-light)" : "white",
+            border: "2px solid var(--ink-soft)",
+            fontFamily: '"Cormorant Garamond", "Noto Serif JP", serif',
+            fontSize: "17px",
+            fontWeight: 600,
+            color: "var(--ink)",
+            outline: "none",
+            resize: "vertical"
+          }}
+          placeholder="ここに英文を入力..."
+        />
+      </div>
+
+      {!showAnswer && (
+        <button onClick={handleSubmit} className="btn-primary w-full" style={{ fontWeight: 700 }}>
+          📝 採点する
+        </button>
+      )}
+
+      {/* 模範解答の表示 */}
+      {showAnswer && (
+        <div className="mt-4 space-y-4">
+          <div className="p-4 border-l-4" style={{ background: "var(--correct-bg)", borderColor: "var(--correct)" }}>
+            <div className="font-mono text-xs tracking-wider uppercase mb-2" style={{ color: "var(--correct)", fontWeight: 700 }}>
+              模 範 解 答
+            </div>
+            <div className="text-base leading-relaxed mb-2" style={{ color: "var(--ink)", fontFamily: '"Cormorant Garamond", serif', fontStyle: "italic", fontSize: "18px", fontWeight: 600 }}>
+              {q.answer}
+            </div>
+            <div className="flex gap-1.5 mb-2">
+              <VoiceButton text={q.answer} lang="en-US" label="米語" id={`${q.id}-a-us`} speak={speak} speakingId={speakingId} />
+              <VoiceButton text={q.answer} lang="en-GB" label="英語" id={`${q.id}-a-gb`} speak={speak} speakingId={speakingId} />
+            </div>
+            {q.acceptableAlternatives && (
+              <div className="text-xs mt-2" style={{ color: "var(--ink-soft)", fontWeight: 600 }}>
+                許容解答: {q.acceptableAlternatives.join(" / ")}
+              </div>
+            )}
+            <div className="text-sm mt-3" style={{ color: "var(--ink)", fontWeight: 500 }}>{q.note}</div>
+          </div>
+
+          {/* 自己採点 */}
+          <div className="p-4" style={{ background: "var(--paper-light)", border: "2px solid var(--ink-soft)" }}>
+            <div className="font-mono text-xs tracking-wider uppercase mb-3" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+              自 己 採 点
+            </div>
+            <div className="text-sm mb-3" style={{ color: "var(--ink)", fontWeight: 500 }}>
+              あなたの解答を模範解答と比較して、自己評価してください：
+            </div>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-2">
+              {[
+                { value: "same", label: "◎ 同じ", color: "var(--correct)" },
+                { value: "close", label: "○ ほぼ同じ", color: "#92400e" },
+                { value: "partial", label: "△ 一部合致", color: "#a16207" },
+                { value: "different", label: "× 違う", color: "var(--wrong)" }
+              ].map(opt => (
+                <button
+                  key={opt.value}
+                  onClick={() => onSelfAssess(opt.value)}
+                  className="chip"
+                  style={state?.assessment === opt.value
+                    ? { background: opt.color, color: "white", borderColor: opt.color, fontWeight: 700 }
+                    : { fontWeight: 600 }}
+                >
+                  {opt.label}
+                </button>
+              ))}
+            </div>
+            {selfAssessed && state.assessment !== "same" && (
+              <div className="mt-3 text-xs" style={{ color: "var(--accent)", fontWeight: 600 }}>
+                ※ ◎ 以外を選んだ問題は、最後に再挑戦できます。
+              </div>
+            )}
+          </div>
+        </div>
+      )}
+
+      {isTeacher && !showAnswer && (
+        <div className="mt-3 font-mono text-sm px-3 py-2 border-2" style={{ background: "#fdf4ff", borderColor: "var(--teacher)", color: "var(--teacher)", fontWeight: 700 }}>
+          👁 模範: {q.answer}
+        </div>
+      )}
+    </article>
+  );
+};
+
+/* ═══════════════════════════════════════════════════
+   文構造練習：開始画面
+   ═══════════════════════════════════════════════════ */
+const PracticeStartScreen = ({ onStart }) => {
+  const [id, setId] = useState("");
+  const [name, setName] = useState("");
+  return (
+    <div className="max-w-xl mx-auto px-6 py-12">
+      <header className="mb-12 text-center">
+        <div className="font-mono text-xs tracking-[0.3em] uppercase mb-3" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          TECH-English · Unit 2 · Practice 01
+        </div>
+        <h1 className="font-display mb-3" style={{ color: "var(--ink)", fontSize: "60px", fontWeight: 700, lineHeight: "1.1" }}>
+          文 構 造 訓 練
+        </h1>
+        <div className="text-base" style={{ color: "var(--ink)", fontFamily: '"Cormorant Garamond", serif', fontWeight: 600, fontStyle: "italic" }}>
+          remain 他のSVC · 万能動詞 · 効果的な他動詞
+        </div>
+      </header>
+
+      <div className="ornamental-rule"></div>
+
+      <div className="space-y-6 mb-8">
+        <div>
+          <label className="font-mono text-xs tracking-[0.15em] uppercase block mb-2" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+            出席番号
+          </label>
+          <input type="text" value={id} onChange={e => setId(e.target.value)}
+            className="w-full bg-transparent text-2xl font-display border-b-2 py-2 outline-none"
+            style={{ color: "var(--ink)", borderColor: "var(--ink)", fontWeight: 700 }}
+            placeholder="例: 12" />
+        </div>
+        <div>
+          <label className="font-mono text-xs tracking-[0.15em] uppercase block mb-2" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+            氏 名
+          </label>
+          <input type="text" value={name} onChange={e => setName(e.target.value)}
+            className="w-full bg-transparent text-2xl border-b-2 py-2 outline-none"
+            style={{ color: "var(--ink)", borderColor: "var(--ink)", fontFamily: '"Noto Serif JP", serif', fontWeight: 700 }}
+            placeholder="例: 山田太郎" />
+        </div>
+      </div>
+
+      <button
+        onClick={() => {
+          if (!id.trim() || !name.trim()) { alert("出席番号と氏名を入力してください。"); return; }
+          onStart(id.trim(), name.trim());
+        }}
+        className="btn-primary w-full" style={{ fontWeight: 700, fontSize: "20px" }}
+      >
+        ▶ 開 始 す る
+      </button>
+
+      <div className="mt-8 text-base leading-relaxed" style={{ color: "var(--ink)", fontWeight: 500 }}>
+        <p>全 20 問（多肢選択 12・記述 8）。途中で閉じても続きから再開できます。</p>
+        <p>記述問題は自己採点。「◎同じ」以外を選んだ問題は最後に再挑戦できます。</p>
+      </div>
+
+      <div className="mt-12 text-center font-mono text-xs tracking-wider" style={{ color: "var(--ink-soft)", fontWeight: 600 }}>
+        © 2026 Kaoruko Takechi · All rights reserved.
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════
+   文構造練習：結果画面
+   ═══════════════════════════════════════════════════ */
+const PracticeResultScreen = ({ studentId, studentName, mcAnswers, wAnswers, onRetry, onReviewWrong }) => {
+  const total = PRACTICE_DATA.length;
+  const mcQs = PRACTICE_DATA.filter(q => q.type === "MC");
+  const wQs = PRACTICE_DATA.filter(q => q.type === "W");
+  const mcCorrect = mcQs.filter(q => mcAnswers[q.id]?.correct).length;
+  const wSame = wQs.filter(q => wAnswers[q.id]?.assessment === "same").length;
+  const totalCorrect = mcCorrect + wSame;
+  const score = Math.round((totalCorrect / total) * 100);
+  const wrongIds = [
+    ...mcQs.filter(q => mcAnswers[q.id] && !mcAnswers[q.id].correct).map(q => q.id),
+    ...wQs.filter(q => wAnswers[q.id] && wAnswers[q.id].assessment && wAnswers[q.id].assessment !== "same").map(q => q.id)
+  ];
+
+  return (
+    <div className="max-w-xl mx-auto px-6 py-12">
+      <div className="text-center mb-8">
+        <div className="font-mono text-sm tracking-[0.3em] uppercase mb-4" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          Result
+        </div>
+        <div className="font-display mb-2" style={{ color: "var(--ink)", fontSize: "84px", fontWeight: 700, lineHeight: "1" }}>
+          {totalCorrect} <span style={{ color: "var(--ink-soft)" }}>/</span> {total}
+        </div>
+        <div className="font-display text-4xl mb-3" style={{ color: "var(--accent)", fontWeight: 700 }}>
+          {score}%
+        </div>
+        <div className="text-sm" style={{ color: "var(--ink-soft)", fontWeight: 600 }}>
+          多肢選択 {mcCorrect}/{mcQs.length} · 記述（◎判定）{wSame}/{wQs.length}
+        </div>
+        <div className="ornamental-rule mt-6"></div>
+        <div className="text-base" style={{ color: "var(--ink)", fontWeight: 600 }}>
+          出席番号 <span className="font-display text-xl" style={{ fontWeight: 700 }}>{studentId}</span> ／ {studentName}
+        </div>
+      </div>
+
+      {wrongIds.length > 0 && (
+        <button onClick={onReviewWrong} className="btn-primary w-full mb-4"
+          style={{ background: "var(--accent)", fontWeight: 700, fontSize: "20px" }}>
+          📝 見直す {wrongIds.length} 問を再挑戦
+        </button>
+      )}
+
+      <div className="border-2 p-5 mb-4" style={{ background: "var(--paper-light)", borderColor: "var(--ink-soft)" }}>
+        <div className="font-mono text-sm tracking-[0.15em] uppercase mb-2" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+          📸 提出方法
+        </div>
+        <div className="text-base leading-relaxed" style={{ color: "var(--ink)", fontWeight: 600 }}>
+          この画面のスクリーンショットを撮って、Google Classroom の課題提出欄にアップロードしてください。
+        </div>
+      </div>
+
+      <button onClick={onRetry} className="btn-primary w-full"
+        style={{ background: "var(--ink-soft)", fontWeight: 700, fontSize: "18px" }}>
+        🔄 最初からやり直す
+      </button>
+
+      <div className="mt-12 text-center font-mono text-xs tracking-wider" style={{ color: "var(--ink-soft)", fontWeight: 600 }}>
+        © 2026 Kaoruko Takechi · All rights reserved.
+      </div>
+    </div>
+  );
+};
+
+/* ═══════════════════════════════════════════════════
+   文構造練習アプリ
+   ═══════════════════════════════════════════════════ */
+function PracticeApp({ onBackToLanding }) {
+  const { speak, speakingId, rateMode, toggleRate } = useSpeech();
+  const [phase, setPhase] = useState("start");
+  const [studentId, setStudentId] = useState("");
+  const [studentName, setStudentName] = useState("");
+  const [mcAnswers, setMcAnswers] = useState({}); // { id: { selected, correct } }
+  const [wAnswers, setWAnswers] = useState({}); // { id: { text, submitted, assessment } }
+  const [retryMcAnswers, setRetryMcAnswers] = useState({});
+  const [retryWAnswers, setRetryWAnswers] = useState({});
+  const [showResetModal, setShowResetModal] = useState(false);
+
+  const isTeacher = studentId === "22" && studentName === "22";
+
+  useEffect(() => {
+    const saved = loadPracticeProgress();
+    if (saved) {
+      setStudentId(saved.studentId || "");
+      setStudentName(saved.studentName || "");
+      setMcAnswers(saved.mcAnswers || {});
+      setWAnswers(saved.wAnswers || {});
+      setRetryMcAnswers(saved.retryMcAnswers || {});
+      setRetryWAnswers(saved.retryWAnswers || {});
+      setPhase(saved.phase || "start");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "start" || studentId) {
+      savePracticeProgress({ studentId, studentName, mcAnswers, wAnswers, retryMcAnswers, retryWAnswers, phase });
+    }
+  }, [studentId, studentName, mcAnswers, wAnswers, retryMcAnswers, retryWAnswers, phase]);
+
+  const handleStart = (id, name) => {
+    setStudentId(id); setStudentName(name); setPhase("quiz");
+  };
+  const handleMCSelect = (qId, sel, correct) => {
+    if (phase === "quiz") setMcAnswers(p => ({ ...p, [qId]: { selected: sel, correct } }));
+    else if (phase === "retry") setRetryMcAnswers(p => ({ ...p, [qId]: { selected: sel, correct } }));
+  };
+  const handleWSubmit = (qId, text) => {
+    if (phase === "quiz") setWAnswers(p => ({ ...p, [qId]: { ...(p[qId] || {}), text, submitted: true } }));
+    else if (phase === "retry") setRetryWAnswers(p => ({ ...p, [qId]: { ...(p[qId] || {}), text, submitted: true } }));
+  };
+  const handleWAssess = (qId, value) => {
+    if (phase === "quiz") setWAnswers(p => ({ ...p, [qId]: { ...(p[qId] || {}), assessment: value } }));
+    else if (phase === "retry") setRetryWAnswers(p => ({ ...p, [qId]: { ...(p[qId] || {}), assessment: value } }));
+  };
+  const handleHome = () => {
+    if (window.confirm("ホームに戻りますか？進捗は保持されます。")) {
+      onBackToLanding();
+    }
+  };
+  const handleReset = () => setShowResetModal(true);
+  const confirmReset = () => {
+    clearPracticeProgress();
+    setStudentId(""); setStudentName(""); setMcAnswers({}); setWAnswers({});
+    setRetryMcAnswers({}); setRetryWAnswers({});
+    setPhase("start"); setShowResetModal(false);
+  };
+  const handleReviewWrong = () => {
+    setRetryMcAnswers({}); setRetryWAnswers({}); setPhase("retry");
+  };
+
+  // 進行中の問題セット
+  const currentQuestions = phase === "retry"
+    ? PRACTICE_DATA.filter(q => {
+        if (q.type === "MC") return mcAnswers[q.id] && !mcAnswers[q.id].correct;
+        if (q.type === "W") return wAnswers[q.id] && wAnswers[q.id].assessment && wAnswers[q.id].assessment !== "same";
+        return false;
+      })
+    : PRACTICE_DATA;
+  const currentMcAnswers = phase === "retry" ? retryMcAnswers : mcAnswers;
+  const currentWAnswers = phase === "retry" ? retryWAnswers : wAnswers;
+
+  // 全問完了判定
+  const allDone = currentQuestions.every(q => {
+    if (q.type === "MC") return currentMcAnswers[q.id];
+    if (q.type === "W") return currentWAnswers[q.id]?.assessment;
+    return false;
+  });
+
+  // 進捗カウント
+  const doneCount = currentQuestions.filter(q => {
+    if (q.type === "MC") return currentMcAnswers[q.id];
+    if (q.type === "W") return currentWAnswers[q.id]?.assessment;
+    return false;
+  }).length;
+
+  if (phase === "start") {
+    return <PracticeStartScreen onStart={handleStart} />;
+  }
+
+  return (
+    <div>
+      {/* 進捗バー */}
+      <div style={{ position: "sticky", top: 0, zIndex: 30, background: "var(--paper)" }}>
+        <div className="progress-track">
+          <div className="progress-fill" style={{ width: `${(doneCount / currentQuestions.length) * 100}%` }} />
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-6 py-6">
+        <header className="mb-8 pb-4 border-b-2" style={{ borderColor: "var(--ink)" }}>
+          <div className="flex items-start justify-between flex-wrap gap-3 mb-2">
+            <div>
+              <div className="font-mono text-xs tracking-[0.3em] uppercase mb-1" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+                TECH-English · Unit 2 · Practice 01
+              </div>
+              <h1 className="font-display" style={{ color: "var(--ink)", fontSize: "36px", fontWeight: 700 }}>
+                文 構 造 訓 練
+              </h1>
+              {isTeacher && (
+                <span className="teacher-badge inline-block mt-2">✨ TEACHER MODE</span>
+              )}
+            </div>
+            <div className="flex gap-1.5 flex-wrap">
+              <button onClick={toggleRate} className="chip"
+                style={rateMode === "normal"
+                  ? { background: "var(--ink)", color: "var(--paper)", borderColor: "var(--ink)", fontWeight: 700 }
+                  : { background: "#fef3c7", color: "var(--accent)", borderColor: "var(--accent)", fontWeight: 700 }}>
+                {rateMode === "normal" ? "⚡ 1.15×" : "🐢 0.85×"}
+              </button>
+              <a href="./dictionary.html" target="_blank" className="chip">📖 辞書</a>
+              <button onClick={handleHome} className="chip">🏠 Home</button>
+              <button onClick={handleReset} className="chip" style={{ color: "var(--wrong)", borderColor: "var(--wrong)" }}>🔄 Reset</button>
+            </div>
+          </div>
+          <div className="text-sm" style={{ color: "var(--ink)", fontWeight: 600 }}>
+            {studentId && `№ ${studentId} ／ ${studentName}`}
+          </div>
+        </header>
+
+        {phase === "result" ? (
+          <PracticeResultScreen
+            studentId={studentId} studentName={studentName}
+            mcAnswers={mcAnswers} wAnswers={wAnswers}
+            onRetry={confirmReset}
+            onReviewWrong={handleReviewWrong}
+          />
+        ) : (
+          <>
+            {phase === "retry" && (
+              <div className="mb-6 p-4 border-l-8" style={{ borderColor: "var(--accent)", background: "var(--highlight)" }}>
+                <span className="font-mono text-sm" style={{ fontWeight: 700, color: "var(--accent)" }}>🔁 RETRY</span>
+                <span className="ml-2 text-base" style={{ fontWeight: 600 }}>
+                  間違えた・自己評価が ◎ 以外の問題のみ再挑戦中
+                </span>
+              </div>
+            )}
+
+            {currentQuestions.map((q, idx) => {
+              if (q.type === "MC") {
+                return (
+                  <PracticeMCCard
+                    key={q.id}
+                    q={q}
+                    qIdx={idx}
+                    total={currentQuestions.length}
+                    selected={currentMcAnswers[q.id]?.selected}
+                    onSelect={(sel, c) => handleMCSelect(q.id, sel, c)}
+                    isTeacher={isTeacher}
+                    speak={speak}
+                    speakingId={speakingId}
+                  />
+                );
+              } else {
+                return (
+                  <PracticeWCard
+                    key={q.id}
+                    q={q}
+                    qIdx={idx}
+                    total={currentQuestions.length}
+                    state={currentWAnswers[q.id]}
+                    onSubmit={text => handleWSubmit(q.id, text)}
+                    onSelfAssess={value => handleWAssess(q.id, value)}
+                    isTeacher={isTeacher}
+                    speak={speak}
+                    speakingId={speakingId}
+                  />
+                );
+              }
+            })}
+
+            {allDone && (
+              <button
+                onClick={() => setPhase("result")}
+                className="btn-primary w-full mt-6"
+                style={{ fontWeight: 700, fontSize: "20px" }}
+              >
+                📊 結 果 を 見 る
+              </button>
+            )}
+          </>
+        )}
+
+        <div className="mt-12 text-center font-mono text-xs tracking-wider pt-6 border-t" style={{ color: "var(--ink-soft)", borderColor: "var(--rule-soft)", fontWeight: 600 }}>
+          © 2026 Kaoruko Takechi · All rights reserved.
+        </div>
+      </div>
+
+      {showResetModal && <ResetModal onConfirm={confirmReset} onCancel={() => setShowResetModal(false)} />}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   語彙クイズアプリ
+   ═══════════════════════════════════════════════════ */
+function VocabApp({ onBackToLanding }) {
+  const { speak, speakingId, rateMode, toggleRate } = useSpeech();
+  const [phase, setPhase] = useState("start");
+  const [studentId, setStudentId] = useState("");
+  const [studentName, setStudentName] = useState("");
+  const [answers, setAnswers] = useState({});
+  const [retryAnswers, setRetryAnswers] = useState({});
+  const [showResetModal, setShowResetModal] = useState(false);
+  const [popup, setPopup] = useState(null);
+
+  const isTeacher = studentId === "22" && studentName === "22";
+
+  useEffect(() => {
+    const saved = loadProgress();
+    if (saved) {
+      setStudentId(saved.studentId || "");
+      setStudentName(saved.studentName || "");
+      setAnswers(saved.answers || {});
+      setRetryAnswers(saved.retryAnswers || {});
+      setPhase(saved.phase || "start");
+    }
+  }, []);
+
+  useEffect(() => {
+    if (phase !== "start" || studentId) {
+      saveProgress({ studentId, studentName, answers, retryAnswers, phase });
+    }
+  }, [studentId, studentName, answers, retryAnswers, phase]);
+
+  const handleStart = (id, name) => {
+    setStudentId(id);
+    setStudentName(name);
+    setPhase("quiz");
+  };
+  const handleSelect = (vocabId, sel, correct) => {
+    if (phase === "quiz") setAnswers(p => ({ ...p, [vocabId]: { selected: sel, correct } }));
+    else if (phase === "retry") setRetryAnswers(p => ({ ...p, [vocabId]: { selected: sel, correct } }));
+  };
+  const handleHome = () => {
+    if (window.confirm("ホームに戻りますか？進捗は保持されます。")) {
+      onBackToLanding();
+    }
+  };
+  const handleReset = () => setShowResetModal(true);
+  const confirmReset = () => {
+    clearProgress();
+    setStudentId(""); setStudentName(""); setAnswers({}); setRetryAnswers({});
+    setPhase("start"); setShowResetModal(false);
+  };
+  const handleWordClick = (data, event) => {
+    const rect = event.target.getBoundingClientRect();
+    const popupWidth = 280;
+    let x = rect.left;
+    if (x + popupWidth > window.innerWidth - 20) x = window.innerWidth - popupWidth - 20;
+    if (x < 10) x = 10;
+    setPopup({
+      data,
+      position: {
+        x,
+        y: rect.bottom + 8
+      }
+    });
+  };
+
+  const currentQuestions = phase === "retry"
+    ? QUIZ_DATA.filter(v => answers[v.id] && !answers[v.id].correct)
+    : QUIZ_DATA;
+  const currentAnswers = phase === "retry" ? retryAnswers : answers;
+  const allAnswered = currentQuestions.every(v => currentAnswers[v.id]);
+  const answeredCount = currentQuestions.filter(v => currentAnswers[v.id]).length;
+
+  if (phase === "start") {
+    return <StartScreen onStart={handleStart} />;
+  }
+
+  return (
+    <div>
+      {/* 進捗バー（fixed） */}
+      <div style={{ position: "sticky", top: 0, zIndex: 30, background: "var(--paper)" }}>
+        <div className="progress-track">
+          <div
+            className="progress-fill"
+            style={{ width: `${(answeredCount / currentQuestions.length) * 100}%` }}
+          />
+        </div>
+      </div>
+
+      <div className="max-w-2xl mx-auto px-6 py-6">
+        {/* ヘッダー */}
+        <header className="mb-8 pb-4 border-b-2" style={{ borderColor: "var(--ink)" }}>
+          <div className="flex items-start justify-between flex-wrap gap-3 mb-2">
+            <div>
+              <div className="font-mono text-xs tracking-[0.3em] uppercase mb-1" style={{ color: "var(--ink-soft)", fontWeight: 700 }}>
+                TECH-English · Unit 2
+              </div>
+              <h1 className="font-display" style={{ color: "var(--ink)", fontSize: "36px", fontWeight: 700 }}>
+                語 彙 訓 練
+              </h1>
+              {isTeacher && (
+                <span className="teacher-badge inline-block mt-2">✨ TEACHER MODE</span>
+              )}
+            </div>
+            <div className="flex gap-1.5 flex-wrap">
+              <button
+                onClick={toggleRate}
+                className="chip"
+                style={rateMode === "normal"
+                  ? { background: "var(--ink)", color: "var(--paper)", borderColor: "var(--ink)", fontWeight: 700 }
+                  : { background: "#fef3c7", color: "var(--accent)", borderColor: "var(--accent)", fontWeight: 700 }}
+              >
+                {rateMode === "normal" ? "⚡ 1.15×" : "🐢 0.85×"}
+              </button>
+              <a href="./dictionary.html" target="_blank" className="chip">📖 辞書</a>
+              <button onClick={handleHome} className="chip">🏠 Home</button>
+              <button onClick={handleReset} className="chip" style={{ color: "var(--wrong)", borderColor: "var(--wrong)" }}>🔄 Reset</button>
+            </div>
+          </div>
+          <div className="text-sm" style={{ color: "var(--ink)", fontWeight: 600 }}>
+            {studentId && `№ ${studentId} ／ ${studentName}`}
+          </div>
+        </header>
+
+        {phase === "result" ? (
+          <ResultScreen
+            studentId={studentId}
+            studentName={studentName}
+            answers={answers}
+            onRetry={confirmReset}
+            onReviewWrong={() => { setRetryAnswers({}); setPhase("retry"); }}
+          />
+        ) : (
+          <>
+            {phase === "retry" && (
+              <div className="mb-6 p-4 border-l-8" style={{ borderColor: "var(--accent)", background: "var(--highlight)" }}>
+                <span className="font-mono text-sm" style={{ fontWeight: 700, color: "var(--accent)" }}>🔁 RETRY</span>
+                <span className="ml-2 text-base" style={{ fontWeight: 600 }}>間違えた問題のみ再挑戦中</span>
+              </div>
+            )}
+
+            {currentQuestions.map((vocab, idx) => (
+              <QuizCard
+                key={vocab.id}
+                vocab={vocab}
+                qIdx={idx}
+                total={currentQuestions.length}
+                selected={currentAnswers[vocab.id]?.selected}
+                onSelect={(sel, c) => handleSelect(vocab.id, sel, c)}
+                isTeacher={isTeacher}
+                speak={speak}
+                speakingId={speakingId}
+                onWordClick={handleWordClick}
+                activePopupKey={popup?.data.key}
+              />
+            ))}
+
+            {allAnswered && (
+              <button
+                onClick={() => setPhase("result")}
+                className="btn-primary w-full mt-6"
+              >
+                📊 結 果 を 見 る
+              </button>
+            )}
+          </>
+        )}
+
+        <div className="mt-12 text-center font-mono text-[10px] tracking-wider pt-6 border-t" style={{ color: "var(--ink-faint)", borderColor: "var(--rule-soft)" }}>
+          © 2026 Kaoruko Takechi · All rights reserved.
+        </div>
+      </div>
+
+      {popup && <Popup data={popup.data} position={popup.position} onClose={() => setPopup(null)} />}
+      {showResetModal && <ResetModal onConfirm={confirmReset} onCancel={() => setShowResetModal(false)} />}
+    </div>
+  );
+}
+
+/* ═══════════════════════════════════════════════════
+   最上位ルーター
+   ═══════════════════════════════════════════════════ */
+function App() {
+  const [view, setView] = useState("landing"); // 'landing' | 'practice' | 'vocab'
+
+  // hash-based routing でURLからの直接遷移にも対応
+  useEffect(() => {
+    const handleHash = () => {
+      const h = window.location.hash.slice(1);
+      if (h === "practice") setView("practice");
+      else if (h === "vocab") setView("vocab");
+      else setView("landing");
+    };
+    handleHash();
+    window.addEventListener("hashchange", handleHash);
+    return () => window.removeEventListener("hashchange", handleHash);
+  }, []);
+
+  const goLanding = () => {
+    window.location.hash = "";
+    setView("landing");
+    window.scrollTo(0, 0);
+  };
+  const goPractice = () => {
+    window.location.hash = "practice";
+    setView("practice");
+    window.scrollTo(0, 0);
+  };
+  const goVocab = () => {
+    window.location.hash = "vocab";
+    setView("vocab");
+    window.scrollTo(0, 0);
+  };
+
+  if (view === "vocab") return <VocabApp onBackToLanding={goLanding} />;
+  if (view === "practice") return <PracticeApp onBackToLanding={goLanding} />;
+  return <LandingScreen onSelectPractice={goPractice} onSelectVocab={goVocab} />;
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
