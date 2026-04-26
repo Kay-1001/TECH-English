@@ -1,0 +1,993 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1">
+<title>TECH-English 辞書 ─ 第2回</title>
+<script src="https://cdn.tailwindcss.com"></script>
+<script crossorigin src="https://unpkg.com/react@18/umd/react.production.min.js"></script>
+<script crossorigin src="https://unpkg.com/react-dom@18/umd/react-dom.production.min.js"></script>
+<script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+<style>
+  :root {
+    --paper: #faf8f3;
+    --ink: #1a1611;
+    --ink-soft: #4a4338;
+    --ink-faint: #8a7f6f;
+    --rule: #d4c8b0;
+    --rule-soft: #e8dfc8;
+    --accent: #8b3a1a;
+    --accent-soft: #c97548;
+    --highlight: #fef3c7;
+    --highlight-deep: #fde68a;
+  }
+  * { box-sizing: border-box; }
+  html, body {
+    margin: 0;
+    padding: 0;
+    background: var(--paper);
+    color: var(--ink);
+    font-family: "Noto Serif JP", "Hiragino Mincho ProN", "游明朝", serif;
+    -webkit-font-smoothing: antialiased;
+  }
+  .font-display {
+    font-family: "Cormorant Garamond", "Hiragino Mincho ProN", serif;
+    font-weight: 600;
+  }
+  .font-mono {
+    font-family: "JetBrains Mono", "SF Mono", "Menlo", monospace;
+  }
+  .font-sans {
+    font-family: "Inter", -apple-system, "Hiragino Sans", sans-serif;
+  }
+  /* 紙のテクスチャ風 */
+  .paper-grain {
+    background-color: var(--paper);
+    background-image:
+      radial-gradient(circle at 20% 30%, rgba(139, 58, 26, 0.02) 0%, transparent 40%),
+      radial-gradient(circle at 80% 70%, rgba(139, 58, 26, 0.015) 0%, transparent 40%);
+  }
+  /* 辞書見出し */
+  .entry-headword {
+    font-family: "Cormorant Garamond", "Hiragino Mincho ProN", serif;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+  }
+  .entry-pos {
+    font-style: italic;
+    color: var(--ink-faint);
+    font-family: "Cormorant Garamond", serif;
+  }
+  /* カテゴリーバッジ */
+  .cat-badge {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    padding: 2px 6px;
+    border: 0.5px solid;
+    display: inline-block;
+  }
+  .cat-tech { color: #1e3a5f; border-color: #1e3a5f; background: #e8eef5; }
+  .cat-engineering { color: #6b3410; border-color: #6b3410; background: #f4e8db; }
+  .cat-medical { color: #7a1f3a; border-color: #7a1f3a; background: #f5e3ea; }
+  .cat-physics { color: #2a4a2c; border-color: #2a4a2c; background: #e0ecdf; }
+  .cat-chemistry { color: #5d2e7a; border-color: #5d2e7a; background: #ede0f3; }
+  .cat-biology { color: #1e5530; border-color: #1e5530; background: #dceadf; }
+  .cat-energy { color: #7a4d10; border-color: #7a4d10; background: #f5ead0; }
+  .cat-business { color: #3a3a3a; border-color: #3a3a3a; background: #ebe7df; }
+  .cat-photography, .cat-optics { color: #4a3870; border-color: #4a3870; background: #e7e2f0; }
+  .cat-astronomy { color: #1c3a4f; border-color: #1c3a4f; background: #d8e3eb; }
+  .cat-weather, .cat-logistics { color: #4a4a3a; border-color: #4a4a3a; background: #ece9dc; }
+  .cat-product { color: #4a2a4a; border-color: #4a2a4a; background: #ebdeec; }
+  .cat-general { color: #5a5040; border-color: #5a5040; background: #efe9da; }
+  /* エントリータイプバッジ */
+  .type-target {
+    background: var(--accent);
+    color: var(--paper);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    padding: 2px 6px;
+    text-transform: uppercase;
+  }
+  .type-phrase {
+    background: var(--ink);
+    color: var(--paper);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    padding: 2px 6px;
+    text-transform: uppercase;
+  }
+  .type-word {
+    border: 0.5px solid var(--ink-faint);
+    color: var(--ink-faint);
+    font-family: "JetBrains Mono", monospace;
+    font-size: 9px;
+    letter-spacing: 0.1em;
+    padding: 2px 6px;
+    text-transform: uppercase;
+  }
+  /* 区切り線 */
+  .ornamental-rule {
+    height: 1px;
+    background: var(--rule);
+    margin: 2rem 0;
+    position: relative;
+  }
+  .ornamental-rule::after {
+    content: "❦";
+    position: absolute;
+    left: 50%;
+    top: 50%;
+    transform: translate(-50%, -50%);
+    background: var(--paper);
+    padding: 0 1rem;
+    color: var(--accent-soft);
+    font-size: 14px;
+  }
+  /* ボタン */
+  .btn-voice {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 10px;
+    border: 0.5px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink-soft);
+    padding: 4px 8px;
+    transition: all 0.15s;
+    cursor: pointer;
+    min-height: 28px;
+  }
+  .btn-voice:hover {
+    background: var(--rule-soft);
+    border-color: var(--ink-faint);
+  }
+  .btn-voice.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  /* フィルターチップ */
+  .chip {
+    font-family: "JetBrains Mono", monospace;
+    font-size: 11px;
+    letter-spacing: 0.05em;
+    padding: 6px 12px;
+    border: 0.5px solid var(--rule);
+    background: var(--paper);
+    color: var(--ink-soft);
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .chip:hover {
+    border-color: var(--ink-faint);
+  }
+  .chip.active {
+    background: var(--ink);
+    color: var(--paper);
+    border-color: var(--ink);
+  }
+  /* 検索ボックス */
+  .search-box {
+    font-family: "Cormorant Garamond", "Hiragino Mincho ProN", serif;
+    font-size: 18px;
+    border: none;
+    border-bottom: 1px solid var(--ink);
+    background: transparent;
+    padding: 8px 0;
+    width: 100%;
+    color: var(--ink);
+    outline: none;
+  }
+  .search-box::placeholder {
+    color: var(--ink-faint);
+    font-style: italic;
+  }
+  /* 例文 */
+  .example-en {
+    font-family: "Cormorant Garamond", "Hiragino Mincho ProN", serif;
+    font-style: italic;
+    color: var(--ink-soft);
+    font-size: 15px;
+    line-height: 1.6;
+  }
+  .example-jp {
+    font-size: 13px;
+    color: var(--ink-faint);
+    line-height: 1.6;
+  }
+  /* スクロールバー */
+  ::-webkit-scrollbar { width: 8px; height: 8px; }
+  ::-webkit-scrollbar-track { background: transparent; }
+  ::-webkit-scrollbar-thumb { background: var(--rule); }
+  ::-webkit-scrollbar-thumb:hover { background: var(--ink-faint); }
+</style>
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600;700&family=Noto+Serif+JP:wght@400;500;600&family=Inter:wght@400;500&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+</head>
+<body class="paper-grain">
+<div id="root"></div>
+
+<script type="application/json" id="vocab-data">
+{
+  "version": "2.0",
+  "updated": "2026-04-26",
+  "description": "TECH-English 辞書台帳。第2回（教科書1-5/1-6/1-7範囲）の例文に登場する語を網羅。中3〜高1レベルでも知らない可能性のある内容語、および連語・イディオムを含む。",
+  "scope": "Unit 2 only (Unit 1 to be added later)",
+
+  "target_words": {
+    "description": "学習対象語（クイズで4択で問う語）。例文中ではタッチ反応を無効化する。",
+    "unit": 2,
+    "items": [
+      { "id": "R1", "word": "eliminate", "pos": "v.", "meaning_jp": "〜を取り除く／無くす", "review_from_unit": 1, "is_target": true, "appears_in_example_id": ["U2V-R1"] },
+      { "id": "R2", "word": "involve", "pos": "v.", "meaning_jp": "〜を要する／含む／伴う", "review_from_unit": 1, "is_target": true, "appears_in_example_id": ["U2V-R2", "U2V-11", "U2V-33"] },
+      { "id": "R3", "word": "augmented", "pos": "adj.", "meaning_jp": "拡張された", "review_from_unit": 1, "is_target": true, "appears_in_example_id": ["U2V-R3"] },
+      { "id": "R4", "word": "vulnerable", "pos": "adj.", "meaning_jp": "脆弱な／弱い", "review_from_unit": 1, "is_target": true, "appears_in_example_id": ["U2V-R4"] },
+      { "id": "R5", "word": "susceptible", "pos": "adj.", "meaning_jp": "〜を起こしやすい／影響を受けやすい", "review_from_unit": 1, "is_target": true, "appears_in_example_id": ["U2V-R5"] },
+      { "id": "U2V-1", "word": "remain", "pos": "v.", "meaning_jp": "〜のままである／依然として〜である", "is_target": true, "appears_in_example_id": ["U2V-1", "U2V-21", "U2P-Q1"] },
+      { "id": "U2V-2", "word": "measure", "pos": "v./n.", "meaning_jp": "〜という寸法である／〜を計測する／測定", "is_target": true, "appears_in_example_id": ["U2V-2", "U2P-Q2"] },
+      { "id": "U2V-3", "word": "weigh", "pos": "v.", "meaning_jp": "重さが〜である／〜の重さを量る", "is_target": true, "appears_in_example_id": ["U2V-3"] },
+      { "id": "U2V-4", "word": "appear", "pos": "v.", "meaning_jp": "〜のように見える／現れる", "is_target": true, "appears_in_example_id": ["U2V-4"] },
+      { "id": "U2V-5", "word": "seem", "pos": "v.", "meaning_jp": "〜のように思える／〜と思われる", "is_target": true, "appears_in_example_id": ["U2V-5"] },
+      { "id": "U2V-6", "word": "resemble", "pos": "v.", "meaning_jp": "〜に似ている", "is_target": true, "appears_in_example_id": ["U2V-6", "U2V-28", "U2P-Q3", "U2P-Q5"] },
+      { "id": "U2V-7", "word": "require", "pos": "v.", "meaning_jp": "〜を必要とする／〜を要求する", "is_target": true, "appears_in_example_id": ["U2V-7", "U2V-22", "U2V-34", "U2P-Q7", "U2P-Q10"] },
+      { "id": "U2V-8", "word": "include", "pos": "v.", "meaning_jp": "〜を含む", "is_target": true, "appears_in_example_id": ["U2V-8", "U2P-Q8"] },
+      { "id": "U2V-9", "word": "undergo", "pos": "v.", "meaning_jp": "〜を経る／〜を受ける／〜を経験する", "is_target": true, "appears_in_example_id": ["U2V-9", "U2V-31", "U2V-35", "U2P-Q16", "U2P-Q20"] },
+      { "id": "U2V-10", "word": "withstand", "pos": "v.", "meaning_jp": "〜に耐える／〜に持ちこたえる", "is_target": true, "appears_in_example_id": ["U2V-10", "U2V-23", "U2P-Q4"] },
+      { "id": "U2V-11", "word": "replace", "pos": "v.", "meaning_jp": "〜に取って代わる／〜を置き換える", "is_target": true, "appears_in_example_id": ["U2V-11", "U2V-24", "U2P-Q11"] },
+      { "id": "U2V-12", "word": "represent", "pos": "v.", "meaning_jp": "〜を表す／〜を意味する／〜を代表する", "is_target": true, "appears_in_example_id": ["U2V-12"] },
+      { "id": "U2V-13", "word": "minimize", "pos": "v.", "meaning_jp": "〜を最小限にする／〜を最小化する", "is_target": true, "appears_in_example_id": ["U2V-13", "U2P-Q12"] },
+      { "id": "U2V-14", "word": "reduce", "pos": "v.", "meaning_jp": "〜を減らす／〜を低減する", "is_target": true, "appears_in_example_id": ["U2V-14", "U2V-25"] },
+      { "id": "U2V-15", "word": "simulate", "pos": "v.", "meaning_jp": "〜を再現する／〜を模擬する", "is_target": true, "appears_in_example_id": ["U2V-15"] },
+      { "id": "U2V-16", "word": "feature", "pos": "v./n.", "meaning_jp": "〜を特徴とする／特徴", "is_target": true, "appears_in_example_id": ["U2V-16", "U2P-Q19"] },
+      { "id": "U2V-17", "word": "list", "pos": "v./n.", "meaning_jp": "〜を列挙する／〜を一覧する／一覧", "is_target": true, "appears_in_example_id": ["U2V-17", "U2P-Q17"] },
+      { "id": "U2V-18", "word": "benefit", "pos": "v./n.", "meaning_jp": "〜に利点をもたらす／〜のためになる／利益", "is_target": true, "appears_in_example_id": ["U2V-18", "U2P-Q13"] },
+      { "id": "U2V-19", "word": "dominate", "pos": "v.", "meaning_jp": "〜の中で優位を占める／〜の主流である", "is_target": true, "appears_in_example_id": ["U2V-19", "U2P-Q18"] },
+      { "id": "U2V-20", "word": "exceed", "pos": "v.", "meaning_jp": "〜を超える／〜を上回る", "is_target": true, "appears_in_example_id": ["U2V-20"] },
+      { "id": "U2V-21", "word": "underlying", "pos": "adj.", "meaning_jp": "根底にある／基礎をなす", "is_target": true, "appears_in_example_id": ["U2V-21", "U2V-29"] },
+      { "id": "U2V-22", "word": "sustainable", "pos": "adj.", "meaning_jp": "持続可能な／持続的な", "is_target": true, "appears_in_example_id": ["U2V-22"] },
+      { "id": "U2V-23", "word": "waterproof", "pos": "adj.", "meaning_jp": "防水の", "is_target": true, "appears_in_example_id": ["U2V-23", "U2P-Q4"] },
+      { "id": "U2V-24", "word": "repetitive", "pos": "adj.", "meaning_jp": "繰り返しの／反復的な", "is_target": true, "appears_in_example_id": ["U2V-11", "U2V-24"] },
+      { "id": "U2V-25", "word": "automated", "pos": "adj.", "meaning_jp": "自動化された／自動の", "is_target": true, "appears_in_example_id": ["U2V-14", "U2V-25"] },
+      { "id": "U2V-26", "word": "stacked", "pos": "adj.", "meaning_jp": "積み重ねられた／積層の", "is_target": true, "appears_in_example_id": ["U2V-26"] },
+      { "id": "U2V-27", "word": "exclusive", "pos": "adj.", "meaning_jp": "専用の／独占的な／排他的な", "is_target": true, "appears_in_example_id": ["U2V-27"] },
+      { "id": "U2V-28", "word": "closely", "pos": "adv.", "meaning_jp": "酷似して／非常によく／密接に", "is_target": true, "appears_in_example_id": ["U2V-6", "U2V-28", "U2P-Q5"] },
+      { "id": "U2V-29", "word": "mechanism", "pos": "n.", "meaning_jp": "メカニズム／仕組み／機構", "is_target": true, "appears_in_example_id": ["U2V-21", "U2V-29"] },
+      { "id": "U2V-30", "word": "complication", "pos": "n.", "meaning_jp": "合併症／複雑な問題", "is_target": true, "appears_in_example_id": ["U2V-21", "U2V-30"] },
+      { "id": "U2V-31", "word": "fission", "pos": "n.", "meaning_jp": "核分裂／分裂", "is_target": true, "appears_in_example_id": ["U2V-9", "U2V-31", "U2P-Q16"] },
+      { "id": "U2V-32", "word": "isotope", "pos": "n.", "meaning_jp": "同位体／アイソトープ", "is_target": true, "appears_in_example_id": ["U2V-32"] },
+      { "id": "U2V-33", "word": "electrode", "pos": "n.", "meaning_jp": "電極", "is_target": true, "appears_in_example_id": ["U2V-33"] },
+      { "id": "U2V-34", "word": "organism", "pos": "n.", "meaning_jp": "生物／有機体", "is_target": true, "appears_in_example_id": ["U2V-R2", "U2V-34"] },
+      { "id": "U2V-35", "word": "substance", "pos": "n.", "meaning_jp": "物質", "is_target": true, "appears_in_example_id": ["U2V-35", "U2P-Q20"] }
+    ]
+  },
+
+  "support_vocabulary": {
+    "description": "周辺語・連語の辞書。例文中の語をタッチした時に表示する語。中3〜高1レベルから専門語まで。",
+    "phrases": [
+      { "id": "P001", "term": "lens hood", "type": "compound_noun", "pos": "n.", "meaning_jp": "レンズフード（カメラ用）", "category": "photography" },
+      { "id": "P002", "term": "caused by", "type": "phrase", "pos": "phrase", "meaning_jp": "〜によって生じた", "category": "general" },
+      { "id": "P003", "term": "stray light", "type": "compound_noun", "pos": "n.", "meaning_jp": "迷光（光学用語）", "category": "optics" },
+      { "id": "P004", "term": "genetic engineering", "type": "compound_noun", "pos": "n.", "meaning_jp": "遺伝子工学", "category": "biology" },
+      { "id": "P005", "term": "the manipulation of", "type": "phrase", "pos": "phrase", "meaning_jp": "〜の操作・〜を扱うこと", "category": "general" },
+      { "id": "P006", "term": "augmented reality", "type": "compound_noun", "pos": "n.", "meaning_jp": "拡張現実（AR）", "category": "tech" },
+      { "id": "P007", "term": "overlay onto", "type": "phrasal_verb", "pos": "v.", "meaning_jp": "〜に重ねる・重ねて表示する", "category": "tech" },
+      { "id": "P008", "term": "control system", "type": "compound_noun", "pos": "n.", "meaning_jp": "制御システム", "category": "engineering" },
+      { "id": "P009", "term": "vulnerable to", "type": "phrase", "pos": "phrase", "meaning_jp": "〜に脆弱な・弱い", "category": "general" },
+      { "id": "P010", "term": "susceptible to", "type": "phrase", "pos": "phrase", "meaning_jp": "〜の影響を受けやすい・〜を起こしやすい", "category": "general" },
+      { "id": "P011", "term": "under repeated loads", "type": "phrase", "pos": "phrase", "meaning_jp": "繰り返し荷重の下で", "category": "engineering" },
+      { "id": "P012", "term": "challenges to", "type": "phrase", "pos": "phrase", "meaning_jp": "〜への課題", "category": "general" },
+      { "id": "P013", "term": "quantum computing", "type": "compound_noun", "pos": "n.", "meaning_jp": "量子コンピューティング", "category": "tech" },
+      { "id": "P014", "term": "black hole", "type": "compound_noun", "pos": "n.", "meaning_jp": "ブラックホール", "category": "astronomy" },
+      { "id": "P015", "term": "located in", "type": "phrase", "pos": "phrase", "meaning_jp": "〜に位置する", "category": "general" },
+      { "id": "P016", "term": "less than", "type": "phrase", "pos": "phrase", "meaning_jp": "〜より少ない・〜未満", "category": "general" },
+      { "id": "P017", "term": "than usual", "type": "phrase", "pos": "phrase", "meaning_jp": "いつもより・通常より", "category": "general" },
+      { "id": "P018", "term": "in a short time", "type": "phrase", "pos": "phrase", "meaning_jp": "短時間で", "category": "general" },
+      { "id": "P019", "term": "with six joints", "type": "phrase", "pos": "phrase", "meaning_jp": "6つの関節を持つ", "category": "engineering" },
+      { "id": "P020", "term": "driving screws", "type": "phrase", "pos": "phrase", "meaning_jp": "ネジを締めること", "category": "engineering" },
+      { "id": "P021", "term": "impact driver", "type": "compound_noun", "pos": "n.", "meaning_jp": "インパクトドライバー（電動工具）", "category": "engineering" },
+      { "id": "P022", "term": "nuclear power plant", "type": "compound_noun", "pos": "n.", "meaning_jp": "原子力発電所", "category": "energy" },
+      { "id": "P023", "term": "uranium fuel", "type": "compound_noun", "pos": "n.", "meaning_jp": "ウラン燃料", "category": "energy" },
+      { "id": "P024", "term": "nuclear fission", "type": "compound_noun", "pos": "n.", "meaning_jp": "核分裂", "category": "physics" },
+      { "id": "P025", "term": "solar panel", "type": "compound_noun", "pos": "n.", "meaning_jp": "ソーラーパネル", "category": "energy" },
+      { "id": "P026", "term": "weather conditions", "type": "compound_noun", "pos": "n.", "meaning_jp": "気象条件", "category": "weather" },
+      { "id": "P027", "term": "artificial intelligence", "type": "compound_noun", "pos": "n.", "meaning_jp": "人工知能・AI", "category": "tech" },
+      { "id": "P028", "term": "numerical value", "type": "compound_noun", "pos": "n.", "meaning_jp": "数値", "category": "general" },
+      { "id": "P029", "term": "such as", "type": "phrase", "pos": "phrase", "meaning_jp": "〜などの・〜のような", "category": "general" },
+      { "id": "P030", "term": "automation system", "type": "compound_noun", "pos": "n.", "meaning_jp": "自動化システム", "category": "engineering" },
+      { "id": "P031", "term": "lubrication system", "type": "compound_noun", "pos": "n.", "meaning_jp": "注油システム・潤滑システム", "category": "engineering" },
+      { "id": "P032", "term": "the need for", "type": "phrase", "pos": "phrase", "meaning_jp": "〜の必要性", "category": "general" },
+      { "id": "P033", "term": "electronic cigarette", "type": "compound_noun", "pos": "n.", "meaning_jp": "電子たばこ", "category": "general" },
+      { "id": "P034", "term": "AB series", "type": "compound_noun", "pos": "n.", "meaning_jp": "ABシリーズ（製品名）", "category": "product" },
+      { "id": "P035", "term": "high-speed printing", "type": "compound_noun", "pos": "n.", "meaning_jp": "高速印刷", "category": "tech" },
+      { "id": "P036", "term": "keyboard shortcut", "type": "compound_noun", "pos": "n.", "meaning_jp": "キーボードショートカット", "category": "tech" },
+      { "id": "P037", "term": "cloud computing", "type": "compound_noun", "pos": "n.", "meaning_jp": "クラウドコンピューティング", "category": "tech" },
+      { "id": "P038", "term": "small and medium-sized", "type": "phrase", "pos": "adj.", "meaning_jp": "中小（規模）の", "category": "business" },
+      { "id": "P039", "term": "solar cell", "type": "compound_noun", "pos": "n.", "meaning_jp": "太陽電池", "category": "energy" },
+      { "id": "P040", "term": "the number of", "type": "phrase", "pos": "phrase", "meaning_jp": "〜の数", "category": "general" },
+      { "id": "P041", "term": "energy production", "type": "compound_noun", "pos": "n.", "meaning_jp": "エネルギー生産", "category": "energy" },
+      { "id": "P042", "term": "e-book reader", "type": "compound_noun", "pos": "n.", "meaning_jp": "電子書籍リーダー", "category": "tech" },
+      { "id": "P043", "term": "immersion in water", "type": "phrase", "pos": "n.", "meaning_jp": "水への浸水", "category": "engineering" },
+      { "id": "P044", "term": "for the use of", "type": "phrase", "pos": "phrase", "meaning_jp": "〜の使用のために・〜が使う用に", "category": "general" },
+      { "id": "P045", "term": "arc welding", "type": "compound_noun", "pos": "n.", "meaning_jp": "アーク溶接", "category": "engineering" },
+      { "id": "P046", "term": "strike an arc", "type": "phrase", "pos": "v.", "meaning_jp": "アークを発生させる", "category": "engineering" },
+      { "id": "P047", "term": "electric arc", "type": "compound_noun", "pos": "n.", "meaning_jp": "電気アーク", "category": "engineering" },
+      { "id": "P048", "term": "living organism", "type": "compound_noun", "pos": "n.", "meaning_jp": "生物・生き物", "category": "biology" },
+      { "id": "P049", "term": "chemical reaction", "type": "compound_noun", "pos": "n.", "meaning_jp": "化学反応", "category": "chemistry" },
+      { "id": "P050", "term": "to form", "type": "phrase", "pos": "phrase", "meaning_jp": "〜を形成するために", "category": "general" },
+      { "id": "P051", "term": "alloy sheet", "type": "compound_noun", "pos": "n.", "meaning_jp": "合金板", "category": "engineering" },
+      { "id": "P052", "term": "in thickness", "type": "phrase", "pos": "phrase", "meaning_jp": "厚さで・厚みにおいて", "category": "general" },
+      { "id": "P053", "term": "DNA molecule", "type": "compound_noun", "pos": "n.", "meaning_jp": "DNA分子", "category": "biology" },
+      { "id": "P054", "term": "water pressure", "type": "compound_noun", "pos": "n.", "meaning_jp": "水圧", "category": "physics" },
+      { "id": "P055", "term": "at depths of up to", "type": "phrase", "pos": "phrase", "meaning_jp": "〜までの深さで", "category": "engineering" },
+      { "id": "P056", "term": "up to", "type": "phrase", "pos": "phrase", "meaning_jp": "〜まで", "category": "general" },
+      { "id": "P057", "term": "high-speed performance", "type": "compound_noun", "pos": "n.", "meaning_jp": "高速性能", "category": "tech" },
+      { "id": "P058", "term": "the smallest", "type": "phrase", "pos": "phrase", "meaning_jp": "最小の・最も小さい", "category": "general" },
+      { "id": "P059", "term": "in their class", "type": "phrase", "pos": "phrase", "meaning_jp": "同類で・そのクラスで", "category": "general" },
+      { "id": "P060", "term": "IoT device", "type": "compound_noun", "pos": "n.", "meaning_jp": "IoT機器", "category": "tech" },
+      { "id": "P061", "term": "wireless chip", "type": "compound_noun", "pos": "n.", "meaning_jp": "無線チップ", "category": "tech" },
+      { "id": "P062", "term": "data transmission", "type": "compound_noun", "pos": "n.", "meaning_jp": "データ伝送", "category": "tech" },
+      { "id": "P063", "term": "head-mounted display", "type": "compound_noun", "pos": "n.", "meaning_jp": "ヘッドマウントディスプレイ・HMD", "category": "tech" },
+      { "id": "P064", "term": "have many uses", "type": "phrase", "pos": "phrase", "meaning_jp": "多くの用途がある", "category": "general" },
+      { "id": "P065", "term": "including", "type": "phrase", "pos": "prep.", "meaning_jp": "〜を含めて・〜などの", "category": "general" },
+      { "id": "P066", "term": "medical sensor", "type": "compound_noun", "pos": "n.", "meaning_jp": "医療用センサー", "category": "medical" },
+      { "id": "P067", "term": "infrared light", "type": "compound_noun", "pos": "n.", "meaning_jp": "赤外線", "category": "physics" },
+      { "id": "P068", "term": "body temperature", "type": "compound_noun", "pos": "n.", "meaning_jp": "体温", "category": "medical" },
+      { "id": "P069", "term": "essential oil", "type": "compound_noun", "pos": "n.", "meaning_jp": "精油・エッセンシャルオイル", "category": "general" },
+      { "id": "P070", "term": "before use", "type": "phrase", "pos": "phrase", "meaning_jp": "使用前に", "category": "general" },
+      { "id": "P071", "term": "online video", "type": "compound_noun", "pos": "n.", "meaning_jp": "オンライン動画", "category": "tech" },
+      { "id": "P072", "term": "TV viewing", "type": "compound_noun", "pos": "n.", "meaning_jp": "テレビ視聴", "category": "general" },
+      { "id": "P073", "term": "planning time", "type": "compound_noun", "pos": "n.", "meaning_jp": "計画時間", "category": "general" },
+      { "id": "P074", "term": "delivery route", "type": "compound_noun", "pos": "n.", "meaning_jp": "配送ルート", "category": "logistics" },
+      { "id": "P075", "term": "be alloyed with", "type": "phrase", "pos": "v.", "meaning_jp": "〜と合金にされる", "category": "engineering" },
+      { "id": "P076", "term": "other metals", "type": "phrase", "pos": "n.", "meaning_jp": "他の金属", "category": "engineering" },
+      { "id": "P077", "term": "the material's strength", "type": "phrase", "pos": "n.", "meaning_jp": "その材料の強度", "category": "engineering" },
+      { "id": "P078", "term": "a large amount of", "type": "phrase", "pos": "phrase", "meaning_jp": "大量の・多くの", "category": "general" },
+      { "id": "P079", "term": "TV model", "type": "compound_noun", "pos": "n.", "meaning_jp": "テレビモデル・テレビの型", "category": "tech" },
+      { "id": "P080", "term": "seamless integration", "type": "compound_noun", "pos": "n.", "meaning_jp": "シームレスな統合", "category": "tech" },
+      { "id": "P081", "term": "game console", "type": "compound_noun", "pos": "n.", "meaning_jp": "ゲーム機", "category": "tech" },
+      { "id": "P082", "term": "digital video recorder", "type": "compound_noun", "pos": "n.", "meaning_jp": "デジタルビデオレコーダー・DVR", "category": "tech" },
+      { "id": "P083", "term": "chemical change", "type": "compound_noun", "pos": "n.", "meaning_jp": "化学変化", "category": "chemistry" }
+    ],
+    "single_words": [
+      { "id": "W001", "word": "flare", "pos": "n.", "meaning_jp": "フレア（光のにじみ）", "category": "photography" },
+      { "id": "W002", "word": "manipulation", "pos": "n.", "meaning_jp": "操作・処理", "category": "general" },
+      { "id": "W003", "word": "gene", "pos": "n.", "meaning_jp": "遺伝子", "category": "biology" },
+      { "id": "W004", "word": "virtual", "pos": "adj.", "meaning_jp": "仮想の", "category": "tech" },
+      { "id": "W005", "word": "object", "pos": "n.", "meaning_jp": "物体・対象", "category": "general" },
+      { "id": "W006", "word": "real", "pos": "adj.", "meaning_jp": "現実の・実際の", "category": "general" },
+      { "id": "W007", "word": "environment", "pos": "n.", "meaning_jp": "環境", "category": "general" },
+      { "id": "W008", "word": "old", "pos": "adj.", "meaning_jp": "古い", "category": "general" },
+      { "id": "W009", "word": "industrial", "pos": "adj.", "meaning_jp": "産業の・工業の", "category": "general" },
+      { "id": "W010", "word": "cyberattack", "pos": "n.", "meaning_jp": "サイバー攻撃", "category": "tech" },
+      { "id": "W011", "word": "compressed", "pos": "adj.", "meaning_jp": "圧縮された", "category": "engineering" },
+      { "id": "W012", "word": "spring", "pos": "n.", "meaning_jp": "ばね・スプリング・春", "category": "general" },
+      { "id": "W013", "word": "fatigue", "pos": "n.", "meaning_jp": "疲労", "category": "engineering" },
+      { "id": "W014", "word": "repeated", "pos": "adj.", "meaning_jp": "繰り返しの", "category": "general" },
+      { "id": "W015", "word": "load", "pos": "n.", "meaning_jp": "荷重・負荷・積荷", "category": "engineering" },
+      { "id": "W016", "word": "challenge", "pos": "n./v.", "meaning_jp": "課題・難題／〜に挑む", "category": "general" },
+      { "id": "W017", "word": "practical", "pos": "adj.", "meaning_jp": "実用的な・実践的な", "category": "general" },
+      { "id": "W018", "word": "quantum", "pos": "adj./n.", "meaning_jp": "量子（の）", "category": "physics" },
+      { "id": "W019", "word": "significant", "pos": "adj.", "meaning_jp": "重大な・意義深い", "category": "general" },
+      { "id": "W020", "word": "distant", "pos": "adj.", "meaning_jp": "遠方の・遠い", "category": "general" },
+      { "id": "W021", "word": "galaxy", "pos": "n.", "meaning_jp": "銀河", "category": "astronomy" },
+      { "id": "W022", "word": "billion", "pos": "n.", "meaning_jp": "10億", "category": "general" },
+      { "id": "W023", "word": "km", "pos": "n.", "meaning_jp": "キロメートル", "category": "general" },
+      { "id": "W024", "word": "across", "pos": "prep./adv.", "meaning_jp": "横切って・直径で", "category": "general" },
+      { "id": "W025", "word": "battery", "pos": "n.", "meaning_jp": "電池・バッテリー", "category": "general" },
+      { "id": "W026", "word": "previous", "pos": "adj.", "meaning_jp": "以前の・前の", "category": "general" },
+      { "id": "W027", "word": "model", "pos": "n.", "meaning_jp": "モデル・型・機種", "category": "general" },
+      { "id": "W028", "word": "supermoon", "pos": "n.", "meaning_jp": "スーパームーン", "category": "astronomy" },
+      { "id": "W029", "word": "large", "pos": "adj.", "meaning_jp": "大きい", "category": "general" },
+      { "id": "W030", "word": "bright", "pos": "adj.", "meaning_jp": "明るい", "category": "general" },
+      { "id": "W031", "word": "testing", "pos": "n.", "meaning_jp": "テスト（する）こと", "category": "general" },
+      { "id": "W032", "word": "software", "pos": "n.", "meaning_jp": "ソフトウェア", "category": "tech" },
+      { "id": "W033", "word": "manually", "pos": "adv.", "meaning_jp": "手動で・人手で", "category": "general" },
+      { "id": "W034", "word": "impossible", "pos": "adj.", "meaning_jp": "不可能な", "category": "general" },
+      { "id": "W035", "word": "robot", "pos": "n.", "meaning_jp": "ロボット", "category": "tech" },
+      { "id": "W036", "word": "joint", "pos": "n.", "meaning_jp": "関節・接合部", "category": "general" },
+      { "id": "W037", "word": "human", "pos": "n./adj.", "meaning_jp": "人間（の）", "category": "general" },
+      { "id": "W038", "word": "arm", "pos": "n.", "meaning_jp": "腕", "category": "general" },
+      { "id": "W039", "word": "secure", "pos": "adj./v.", "meaning_jp": "安全な・確実な／〜を確保する", "category": "general" },
+      { "id": "W040", "word": "smartphone", "pos": "n.", "meaning_jp": "スマートフォン", "category": "tech" },
+      { "id": "W041", "word": "access", "pos": "n./v.", "meaning_jp": "アクセス・接続／〜にアクセスする", "category": "tech" },
+      { "id": "W042", "word": "password", "pos": "n.", "meaning_jp": "パスワード", "category": "tech" },
+      { "id": "W043", "word": "passcode", "pos": "n.", "meaning_jp": "パスコード", "category": "tech" },
+      { "id": "W044", "word": "common", "pos": "adj.", "meaning_jp": "一般的な・共通の", "category": "general" },
+      { "id": "W045", "word": "tool", "pos": "n.", "meaning_jp": "工具・道具", "category": "general" },
+      { "id": "W046", "word": "screw", "pos": "n.", "meaning_jp": "ネジ", "category": "engineering" },
+      { "id": "W047", "word": "screwdriver", "pos": "n.", "meaning_jp": "ねじ回し・ドライバー", "category": "engineering" },
+      { "id": "W048", "word": "impact", "pos": "n.", "meaning_jp": "衝撃・影響", "category": "general" },
+      { "id": "W049", "word": "nuclear", "pos": "adj.", "meaning_jp": "核の・原子力の", "category": "physics" },
+      { "id": "W050", "word": "power", "pos": "n.", "meaning_jp": "電力・力・能力", "category": "general" },
+      { "id": "W051", "word": "plant", "pos": "n.", "meaning_jp": "発電所・工場・植物", "category": "general" },
+      { "id": "W052", "word": "uranium", "pos": "n.", "meaning_jp": "ウラン", "category": "physics" },
+      { "id": "W053", "word": "fuel", "pos": "n.", "meaning_jp": "燃料", "category": "energy" },
+      { "id": "W054", "word": "rooftop", "pos": "adj./n.", "meaning_jp": "屋上の・屋根の", "category": "general" },
+      { "id": "W055", "word": "solar", "pos": "adj.", "meaning_jp": "太陽の", "category": "energy" },
+      { "id": "W056", "word": "panel", "pos": "n.", "meaning_jp": "パネル", "category": "general" },
+      { "id": "W057", "word": "extreme", "pos": "adj.", "meaning_jp": "厳しい・極端な", "category": "general" },
+      { "id": "W058", "word": "weather", "pos": "n.", "meaning_jp": "天候・気象", "category": "general" },
+      { "id": "W059", "word": "condition", "pos": "n.", "meaning_jp": "条件・状態", "category": "general" },
+      { "id": "W060", "word": "artificial", "pos": "adj.", "meaning_jp": "人工の・人為的な", "category": "general" },
+      { "id": "W061", "word": "intelligence", "pos": "n.", "meaning_jp": "知能・知性", "category": "general" },
+      { "id": "W062", "word": "job", "pos": "n.", "meaning_jp": "仕事・職業", "category": "general" },
+      { "id": "W063", "word": "task", "pos": "n.", "meaning_jp": "作業・タスク", "category": "general" },
+      { "id": "W064", "word": "numerical", "pos": "adj.", "meaning_jp": "数値の", "category": "general" },
+      { "id": "W065", "word": "value", "pos": "n.", "meaning_jp": "値・価値", "category": "general" },
+      { "id": "W066", "word": "quantity", "pos": "n.", "meaning_jp": "量", "category": "general" },
+      { "id": "W067", "word": "length", "pos": "n.", "meaning_jp": "長さ", "category": "general" },
+      { "id": "W068", "word": "distance", "pos": "n.", "meaning_jp": "距離", "category": "general" },
+      { "id": "W069", "word": "density", "pos": "n.", "meaning_jp": "密度", "category": "physics" },
+      { "id": "W070", "word": "choose", "pos": "v.", "meaning_jp": "〜を選ぶ", "category": "general" },
+      { "id": "W071", "word": "automation", "pos": "n.", "meaning_jp": "自動化", "category": "tech" },
+      { "id": "W072", "word": "wiring", "pos": "n.", "meaning_jp": "配線", "category": "engineering" },
+      { "id": "W073", "word": "cabling", "pos": "n.", "meaning_jp": "ケーブル配線", "category": "engineering" },
+      { "id": "W074", "word": "lubrication", "pos": "n.", "meaning_jp": "潤滑・注油", "category": "engineering" },
+      { "id": "W075", "word": "need", "pos": "n./v.", "meaning_jp": "必要・必要性／〜を必要とする", "category": "general" },
+      { "id": "W076", "word": "maintenance", "pos": "n.", "meaning_jp": "整備・保守", "category": "engineering" },
+      { "id": "W077", "word": "electronic", "pos": "adj.", "meaning_jp": "電子の", "category": "tech" },
+      { "id": "W078", "word": "cigarette", "pos": "n.", "meaning_jp": "たばこ", "category": "general" },
+      { "id": "W079", "word": "smoking", "pos": "n.", "meaning_jp": "喫煙", "category": "general" },
+      { "id": "W080", "word": "without", "pos": "prep.", "meaning_jp": "〜なしで", "category": "general" },
+      { "id": "W081", "word": "burn", "pos": "v.", "meaning_jp": "〜を燃やす・燃える", "category": "general" },
+      { "id": "W082", "word": "tobacco", "pos": "n.", "meaning_jp": "たばこ（葉）", "category": "general" },
+      { "id": "W083", "word": "series", "pos": "n.", "meaning_jp": "シリーズ", "category": "general" },
+      { "id": "W084", "word": "printer", "pos": "n.", "meaning_jp": "プリンター", "category": "tech" },
+      { "id": "W085", "word": "high-speed", "pos": "adj.", "meaning_jp": "高速の", "category": "general" },
+      { "id": "W086", "word": "printing", "pos": "n.", "meaning_jp": "印刷", "category": "tech" },
+      { "id": "W087", "word": "reliable", "pos": "adj.", "meaning_jp": "信頼できる", "category": "general" },
+      { "id": "W088", "word": "performance", "pos": "n.", "meaning_jp": "性能・パフォーマンス", "category": "general" },
+      { "id": "W089", "word": "table", "pos": "n.", "meaning_jp": "表・テーブル", "category": "general" },
+      { "id": "W090", "word": "keyboard", "pos": "n.", "meaning_jp": "キーボード", "category": "tech" },
+      { "id": "W091", "word": "shortcut", "pos": "n.", "meaning_jp": "ショートカット", "category": "tech" },
+      { "id": "W092", "word": "enter", "pos": "v.", "meaning_jp": "〜を入力する・入る", "category": "general" },
+      { "id": "W093", "word": "command", "pos": "n.", "meaning_jp": "コマンド・命令", "category": "tech" },
+      { "id": "W094", "word": "cloud", "pos": "n.", "meaning_jp": "クラウド・雲", "category": "tech" },
+      { "id": "W095", "word": "computing", "pos": "n.", "meaning_jp": "コンピューティング・計算（科学）", "category": "tech" },
+      { "id": "W096", "word": "medium-sized", "pos": "adj.", "meaning_jp": "中規模の", "category": "business" },
+      { "id": "W097", "word": "medium", "pos": "n./adj.", "meaning_jp": "中間の・媒体", "category": "general" },
+      { "id": "W098", "word": "company", "pos": "n.", "meaning_jp": "会社", "category": "business" },
+      { "id": "W099", "word": "silicon", "pos": "n.", "meaning_jp": "シリコン・ケイ素", "category": "physics" },
+      { "id": "W100", "word": "cell", "pos": "n.", "meaning_jp": "電池セル・細胞", "category": "general" },
+      { "id": "W101", "word": "application", "pos": "n.", "meaning_jp": "用途・応用・アプリケーション", "category": "general" },
+      { "id": "W102", "word": "number", "pos": "n.", "meaning_jp": "数", "category": "general" },
+      { "id": "W103", "word": "connected", "pos": "adj.", "meaning_jp": "接続された", "category": "tech" },
+      { "id": "W104", "word": "device", "pos": "n.", "meaning_jp": "デバイス・機器", "category": "tech" },
+      { "id": "W105", "word": "already", "pos": "adv.", "meaning_jp": "すでに", "category": "general" },
+      { "id": "W106", "word": "far", "pos": "adv.", "meaning_jp": "遥かに・はるか", "category": "general" },
+      { "id": "W107", "word": "global", "pos": "adj.", "meaning_jp": "世界の・地球規模の", "category": "general" },
+      { "id": "W108", "word": "population", "pos": "n.", "meaning_jp": "人口", "category": "general" },
+      { "id": "W109", "word": "diabetic", "pos": "adj.", "meaning_jp": "糖尿病の", "category": "medical" },
+      { "id": "W110", "word": "unclear", "pos": "adj.", "meaning_jp": "不明瞭な・はっきりしない", "category": "general" },
+      { "id": "W111", "word": "energy", "pos": "n.", "meaning_jp": "エネルギー", "category": "energy" },
+      { "id": "W112", "word": "production", "pos": "n.", "meaning_jp": "生産", "category": "business" },
+      { "id": "W113", "word": "efficient", "pos": "adj.", "meaning_jp": "効率的な", "category": "general" },
+      { "id": "W114", "word": "use", "pos": "n./v.", "meaning_jp": "使用・用途／〜を使う", "category": "general" },
+      { "id": "W115", "word": "resource", "pos": "n.", "meaning_jp": "資源", "category": "general" },
+      { "id": "W116", "word": "e-book", "pos": "n.", "meaning_jp": "電子書籍", "category": "tech" },
+      { "id": "W117", "word": "reader", "pos": "n.", "meaning_jp": "読み取り装置・読者", "category": "general" },
+      { "id": "W118", "word": "immersion", "pos": "n.", "meaning_jp": "浸水・浸漬", "category": "general" },
+      { "id": "W119", "word": "water", "pos": "n.", "meaning_jp": "水", "category": "general" },
+      { "id": "W120", "word": "architecture", "pos": "n.", "meaning_jp": "構造・アーキテクチャ・建築", "category": "general" },
+      { "id": "W121", "word": "space", "pos": "n.", "meaning_jp": "スペース・空間・宇宙", "category": "general" },
+      { "id": "W122", "word": "current", "pos": "adj./n.", "meaning_jp": "現在の・電流", "category": "general" },
+      { "id": "W123", "word": "product", "pos": "n.", "meaning_jp": "製品", "category": "business" },
+      { "id": "W124", "word": "engineer", "pos": "n.", "meaning_jp": "エンジニア・技術者", "category": "general" },
+      { "id": "W125", "word": "frequency", "pos": "n.", "meaning_jp": "頻度・周波数", "category": "general" },
+      { "id": "W126", "word": "early", "pos": "adj./adv.", "meaning_jp": "早期の・早い・早く", "category": "general" },
+      { "id": "W127", "word": "diagnosis", "pos": "n.", "meaning_jp": "診断", "category": "medical" },
+      { "id": "W128", "word": "prevent", "pos": "v.", "meaning_jp": "〜を予防する・防ぐ", "category": "general" },
+      { "id": "W129", "word": "serious", "pos": "adj.", "meaning_jp": "深刻な・重大な", "category": "general" },
+      { "id": "W130", "word": "radioactive", "pos": "adj.", "meaning_jp": "放射性の", "category": "physics" },
+      { "id": "W131", "word": "industry", "pos": "n.", "meaning_jp": "産業・工業", "category": "business" },
+      { "id": "W132", "word": "medicine", "pos": "n.", "meaning_jp": "医療・医学", "category": "medical" },
+      { "id": "W133", "word": "arc", "pos": "n.", "meaning_jp": "アーク・弧", "category": "engineering" },
+      { "id": "W134", "word": "welding", "pos": "n.", "meaning_jp": "溶接", "category": "engineering" },
+      { "id": "W135", "word": "strike", "pos": "v.", "meaning_jp": "〜を打つ・〜を発生させる", "category": "general" },
+      { "id": "W136", "word": "electric", "pos": "adj.", "meaning_jp": "電気の", "category": "general" },
+      { "id": "W137", "word": "between", "pos": "prep.", "meaning_jp": "〜の間で", "category": "general" },
+      { "id": "W138", "word": "workpiece", "pos": "n.", "meaning_jp": "加工物", "category": "engineering" },
+      { "id": "W139", "word": "living", "pos": "adj.", "meaning_jp": "生きている", "category": "general" },
+      { "id": "W140", "word": "survival", "pos": "n.", "meaning_jp": "生存", "category": "general" },
+      { "id": "W141", "word": "chemical", "pos": "adj./n.", "meaning_jp": "化学の・化学物質", "category": "chemistry" },
+      { "id": "W142", "word": "reaction", "pos": "n.", "meaning_jp": "反応", "category": "general" },
+      { "id": "W143", "word": "change", "pos": "n./v.", "meaning_jp": "変化／〜を変える", "category": "general" },
+      { "id": "W144", "word": "form", "pos": "v./n.", "meaning_jp": "〜を形成する／形", "category": "general" },
+      { "id": "W145", "word": "different", "pos": "adj.", "meaning_jp": "異なる・別の", "category": "general" },
+      { "id": "W146", "word": "alloy", "pos": "n./v.", "meaning_jp": "合金／〜と合金にする", "category": "engineering" },
+      { "id": "W147", "word": "sheet", "pos": "n.", "meaning_jp": "板・シート", "category": "general" },
+      { "id": "W148", "word": "millimeter", "pos": "n.", "meaning_jp": "ミリメートル", "category": "general" },
+      { "id": "W149", "word": "thickness", "pos": "n.", "meaning_jp": "厚さ・厚み", "category": "general" },
+      { "id": "W150", "word": "DNA", "pos": "n.", "meaning_jp": "DNA・デオキシリボ核酸", "category": "biology" },
+      { "id": "W151", "word": "molecule", "pos": "n.", "meaning_jp": "分子", "category": "chemistry" },
+      { "id": "W152", "word": "twisted", "pos": "adj.", "meaning_jp": "ねじれた", "category": "general" },
+      { "id": "W153", "word": "ladder", "pos": "n.", "meaning_jp": "はしご", "category": "general" },
+      { "id": "W154", "word": "pressure", "pos": "n.", "meaning_jp": "圧力", "category": "physics" },
+      { "id": "W155", "word": "depth", "pos": "n.", "meaning_jp": "深さ", "category": "general" },
+      { "id": "W156", "word": "meter", "pos": "n.", "meaning_jp": "メートル・計測器", "category": "general" },
+      { "id": "W157", "word": "small", "pos": "adj.", "meaning_jp": "小さい", "category": "general" },
+      { "id": "W158", "word": "size", "pos": "n.", "meaning_jp": "大きさ・サイズ", "category": "general" },
+      { "id": "W159", "word": "class", "pos": "n.", "meaning_jp": "クラス・分類", "category": "general" },
+      { "id": "W160", "word": "IoT", "pos": "n.", "meaning_jp": "IoT・モノのインターネット", "category": "tech" },
+      { "id": "W161", "word": "wireless", "pos": "adj.", "meaning_jp": "無線の", "category": "tech" },
+      { "id": "W162", "word": "chip", "pos": "n.", "meaning_jp": "チップ・破片", "category": "tech" },
+      { "id": "W163", "word": "data", "pos": "n.", "meaning_jp": "データ", "category": "general" },
+      { "id": "W164", "word": "transmission", "pos": "n.", "meaning_jp": "伝送・送信", "category": "tech" },
+      { "id": "W165", "word": "head-mounted", "pos": "adj.", "meaning_jp": "頭部装着の", "category": "tech" },
+      { "id": "W166", "word": "display", "pos": "n.", "meaning_jp": "ディスプレイ・表示装置", "category": "tech" },
+      { "id": "W167", "word": "HMD", "pos": "n.", "meaning_jp": "HMD（ヘッドマウントディスプレイの略）", "category": "tech" },
+      { "id": "W168", "word": "gaming", "pos": "n.", "meaning_jp": "ゲーム（をすること）", "category": "general" },
+      { "id": "W169", "word": "engineering", "pos": "n.", "meaning_jp": "工学・エンジニアリング", "category": "general" },
+      { "id": "W170", "word": "medical", "pos": "adj.", "meaning_jp": "医療の", "category": "medical" },
+      { "id": "W171", "word": "sensor", "pos": "n.", "meaning_jp": "センサー", "category": "tech" },
+      { "id": "W172", "word": "infrared", "pos": "adj.", "meaning_jp": "赤外線の", "category": "physics" },
+      { "id": "W173", "word": "light", "pos": "n.", "meaning_jp": "光・明かり", "category": "general" },
+      { "id": "W174", "word": "monitor", "pos": "v./n.", "meaning_jp": "〜を監視する／モニター", "category": "tech" },
+      { "id": "W175", "word": "patient", "pos": "n.", "meaning_jp": "患者", "category": "medical" },
+      { "id": "W176", "word": "body", "pos": "n.", "meaning_jp": "体", "category": "general" },
+      { "id": "W177", "word": "temperature", "pos": "n.", "meaning_jp": "温度", "category": "general" },
+      { "id": "W178", "word": "continuously", "pos": "adv.", "meaning_jp": "継続的に・絶え間なく", "category": "general" },
+      { "id": "W179", "word": "essential", "pos": "adj.", "meaning_jp": "不可欠な・必須の", "category": "general" },
+      { "id": "W180", "word": "oil", "pos": "n.", "meaning_jp": "油・オイル", "category": "general" },
+      { "id": "W181", "word": "dilution", "pos": "n.", "meaning_jp": "希釈", "category": "chemistry" },
+      { "id": "W182", "word": "online", "pos": "adj./adv.", "meaning_jp": "オンラインの・オンライン", "category": "tech" },
+      { "id": "W183", "word": "video", "pos": "n.", "meaning_jp": "動画・ビデオ", "category": "tech" },
+      { "id": "W184", "word": "partly", "pos": "adv.", "meaning_jp": "部分的に", "category": "general" },
+      { "id": "W185", "word": "traditional", "pos": "adj.", "meaning_jp": "伝統的な・従来の", "category": "general" },
+      { "id": "W186", "word": "TV", "pos": "n.", "meaning_jp": "テレビ", "category": "general" },
+      { "id": "W187", "word": "viewing", "pos": "n.", "meaning_jp": "視聴（する）こと", "category": "general" },
+      { "id": "W188", "word": "GPS", "pos": "n.", "meaning_jp": "GPS・全地球測位システム", "category": "tech" },
+      { "id": "W189", "word": "planning", "pos": "n.", "meaning_jp": "計画・立案", "category": "general" },
+      { "id": "W190", "word": "time", "pos": "n.", "meaning_jp": "時間", "category": "general" },
+      { "id": "W191", "word": "drone", "pos": "n.", "meaning_jp": "ドローン", "category": "tech" },
+      { "id": "W192", "word": "delivery", "pos": "n.", "meaning_jp": "配達・配送", "category": "logistics" },
+      { "id": "W193", "word": "route", "pos": "n.", "meaning_jp": "ルート・経路", "category": "general" },
+      { "id": "W194", "word": "titanium", "pos": "n.", "meaning_jp": "チタニウム・チタン", "category": "engineering" },
+      { "id": "W195", "word": "metal", "pos": "n.", "meaning_jp": "金属", "category": "engineering" },
+      { "id": "W196", "word": "increase", "pos": "v./n.", "meaning_jp": "〜を増す・増加する／増加", "category": "general" },
+      { "id": "W197", "word": "material", "pos": "n.", "meaning_jp": "材料・物質", "category": "general" },
+      { "id": "W198", "word": "strength", "pos": "n.", "meaning_jp": "強度・強さ", "category": "engineering" },
+      { "id": "W199", "word": "generate", "pos": "v.", "meaning_jp": "〜を発生させる・生成する", "category": "general" },
+      { "id": "W200", "word": "amount", "pos": "n.", "meaning_jp": "量", "category": "general" },
+      { "id": "W201", "word": "heat", "pos": "n.", "meaning_jp": "熱", "category": "physics" },
+      { "id": "W202", "word": "new", "pos": "adj.", "meaning_jp": "新しい・新型の", "category": "general" },
+      { "id": "W203", "word": "seamless", "pos": "adj.", "meaning_jp": "シームレスな・継ぎ目のない", "category": "tech" },
+      { "id": "W204", "word": "integration", "pos": "n.", "meaning_jp": "統合", "category": "general" },
+      { "id": "W205", "word": "game", "pos": "n.", "meaning_jp": "ゲーム", "category": "general" },
+      { "id": "W206", "word": "console", "pos": "n.", "meaning_jp": "コンソール・操作卓", "category": "tech" },
+      { "id": "W207", "word": "digital", "pos": "adj.", "meaning_jp": "デジタルの", "category": "tech" },
+      { "id": "W208", "word": "recorder", "pos": "n.", "meaning_jp": "録画機・録音機", "category": "tech" }
+    ]
+  }
+}
+
+</script>
+
+<script type="text/babel" data-presets="react">
+const { useState, useEffect, useMemo } = React;
+
+// JSONデータの読み込み
+const VOCAB_DATA = JSON.parse(document.getElementById("vocab-data").textContent);
+
+// ─────────────────────────────────────────────────
+// useSpeech フック
+// ─────────────────────────────────────────────────
+const useSpeech = () => {
+  const [voices, setVoices] = useState([]);
+  const [speakingId, setSpeakingId] = useState(null);
+  const [rateMode, setRateMode] = useState("normal");
+
+  useEffect(() => {
+    if (!("speechSynthesis" in window)) return;
+    const load = () => setVoices(window.speechSynthesis.getVoices());
+    load();
+    window.speechSynthesis.onvoiceschanged = load;
+    return () => {
+      window.speechSynthesis.onvoiceschanged = null;
+      window.speechSynthesis.cancel();
+    };
+  }, []);
+
+  const speak = (text, lang = "en-US", id = "x") => {
+    if (!("speechSynthesis" in window)) return;
+    window.speechSynthesis.cancel();
+    const u = new SpeechSynthesisUtterance(text);
+    u.lang = lang;
+    u.rate = rateMode === "slow" ? 0.85 : 1.15;
+    u.pitch = 1.0;
+    const femalePattern = lang === "en-US"
+      ? /female|samantha|victoria|karen|zira|allison|ava|jenny|aria/i
+      : /female|kate|serena|moira|fiona|hazel|susan|emily/i;
+    const preferred =
+      voices.find(v => v.lang === lang && femalePattern.test(v.name)) ||
+      voices.find(v => v.lang === lang) ||
+      voices.find(v => v.lang.startsWith(lang.slice(0, 2)));
+    if (preferred) u.voice = preferred;
+    u.onstart = () => setSpeakingId(id);
+    u.onend = () => setSpeakingId(null);
+    u.onerror = () => setSpeakingId(null);
+    window.speechSynthesis.speak(u);
+  };
+
+  const toggleRate = () => setRateMode(p => (p === "normal" ? "slow" : "normal"));
+  return { speak, speakingId, rateMode, toggleRate };
+};
+
+// ─────────────────────────────────────────────────
+// 全エントリーを統合形式に変換
+// ─────────────────────────────────────────────────
+const buildAllEntries = () => {
+  const entries = [];
+  // target_words
+  VOCAB_DATA.target_words.items.forEach(item => {
+    entries.push({
+      type: "target",
+      term: item.word,
+      pos: item.pos,
+      meaning: item.meaning_jp,
+      category: "target_vocab",
+      isReview: !!item.review_from_unit,
+      id: item.id
+    });
+  });
+  // phrases
+  VOCAB_DATA.support_vocabulary.phrases.forEach(item => {
+    entries.push({
+      type: "phrase",
+      term: item.term,
+      pos: item.pos,
+      meaning: item.meaning_jp,
+      category: item.category,
+      id: item.id
+    });
+  });
+  // single_words
+  VOCAB_DATA.support_vocabulary.single_words.forEach(item => {
+    entries.push({
+      type: "word",
+      term: item.word,
+      pos: item.pos,
+      meaning: item.meaning_jp,
+      category: item.category,
+      id: item.id
+    });
+  });
+  return entries;
+};
+
+const ALL_ENTRIES = buildAllEntries();
+
+// ユニークなカテゴリ一覧
+const ALL_CATEGORIES = [...new Set(ALL_ENTRIES.map(e => e.category))].sort();
+
+// ─────────────────────────────────────────────────
+// 音声ボタン
+// ─────────────────────────────────────────────────
+const VoiceButton = ({ text, lang, label, id, speak, speakingId }) => {
+  const isActive = speakingId === id;
+  return (
+    <button
+      onClick={() => speak(text, lang, id)}
+      className={`btn-voice ${isActive ? "active" : ""}`}
+    >
+      🔊 {label}
+    </button>
+  );
+};
+
+// ─────────────────────────────────────────────────
+// エントリーカード
+// ─────────────────────────────────────────────────
+const EntryCard = ({ entry, speak, speakingId }) => {
+  const typeBadge = entry.type === "target"
+    ? <span className="type-target">学習対象</span>
+    : entry.type === "phrase"
+      ? <span className="type-phrase">連語</span>
+      : <span className="type-word">単語</span>;
+
+  const catClass = `cat-${entry.category.replace(/_/g, "-")}`;
+
+  return (
+    <article className="py-5 border-b" style={{ borderColor: "var(--rule-soft)" }}>
+      <div className="flex items-baseline gap-3 flex-wrap mb-2">
+        <h3 className="entry-headword text-2xl" style={{ color: "var(--ink)" }}>
+          {entry.term}
+        </h3>
+        <span className="entry-pos text-sm">{entry.pos}</span>
+        {typeBadge}
+        {entry.isReview && (
+          <span className="text-[10px] font-mono" style={{ color: "var(--accent)" }}>
+            🔁 復習
+          </span>
+        )}
+      </div>
+      <div className="text-base leading-relaxed mb-2" style={{ color: "var(--ink-soft)" }}>
+        {entry.meaning}
+      </div>
+      <div className="flex items-center gap-2 flex-wrap">
+        <span className={`cat-badge ${catClass}`}>{entry.category}</span>
+        <div className="flex gap-1.5 ml-auto">
+          <VoiceButton
+            text={entry.term}
+            lang="en-US"
+            label="米"
+            id={`${entry.id}-us`}
+            speak={speak}
+            speakingId={speakingId}
+          />
+          <VoiceButton
+            text={entry.term}
+            lang="en-GB"
+            label="英"
+            id={`${entry.id}-gb`}
+            speak={speak}
+            speakingId={speakingId}
+          />
+        </div>
+      </div>
+    </article>
+  );
+};
+
+// ─────────────────────────────────────────────────
+// アルファベット セクションヘッダー
+// ─────────────────────────────────────────────────
+const SectionHeader = ({ letter }) => (
+  <div
+    className="font-display text-5xl mt-12 mb-2 pb-2 border-b-2"
+    style={{ color: "var(--accent)", borderColor: "var(--accent)" }}
+  >
+    {letter.toUpperCase()}
+  </div>
+);
+
+// ─────────────────────────────────────────────────
+// メインアプリ
+// ─────────────────────────────────────────────────
+function App() {
+  const { speak, speakingId, rateMode, toggleRate } = useSpeech();
+  const [search, setSearch] = useState("");
+  const [typeFilter, setTypeFilter] = useState("all");
+  const [categoryFilter, setCategoryFilter] = useState("all");
+  const [sortMode, setSortMode] = useState("alpha");
+
+  const filtered = useMemo(() => {
+    return ALL_ENTRIES.filter(e => {
+      if (search) {
+        const q = search.toLowerCase();
+        if (!e.term.toLowerCase().includes(q) && !e.meaning.includes(search)) {
+          return false;
+        }
+      }
+      if (typeFilter !== "all" && e.type !== typeFilter) return false;
+      if (categoryFilter !== "all" && e.category !== categoryFilter) return false;
+      return true;
+    }).sort((a, b) => {
+      if (sortMode === "alpha") return a.term.localeCompare(b.term);
+      if (sortMode === "type") {
+        const order = { target: 1, phrase: 2, word: 3 };
+        return order[a.type] - order[b.type] || a.term.localeCompare(b.term);
+      }
+      if (sortMode === "category") {
+        return a.category.localeCompare(b.category) || a.term.localeCompare(b.term);
+      }
+      return 0;
+    });
+  }, [search, typeFilter, categoryFilter, sortMode]);
+
+  // アルファベット順表示時のグループ化
+  const groupedByLetter = useMemo(() => {
+    if (sortMode !== "alpha") return null;
+    const groups = {};
+    filtered.forEach(e => {
+      const letter = e.term[0].toLowerCase();
+      if (!groups[letter]) groups[letter] = [];
+      groups[letter].push(e);
+    });
+    return groups;
+  }, [filtered, sortMode]);
+
+  return (
+    <div className="max-w-4xl mx-auto px-4 sm:px-8 py-8">
+      {/* ヘッダー */}
+      <header className="mb-8">
+        <div className="flex items-start justify-between flex-wrap gap-4 mb-6">
+          <div>
+            <div
+              className="text-[10px] font-mono tracking-[0.3em] uppercase mb-2"
+              style={{ color: "var(--ink-faint)" }}
+            >
+              TECH-English · Lexicon
+            </div>
+            <h1
+              className="font-display text-5xl sm:text-6xl"
+              style={{ color: "var(--ink)" }}
+            >
+              辞 書
+            </h1>
+            <div
+              className="text-sm mt-1 italic"
+              style={{ color: "var(--ink-soft)" }}
+            >
+              Unit 2 — remain 他のSVC ／ 万能動詞 ／ 効果的な他動詞
+            </div>
+          </div>
+          <div className="flex gap-2 flex-wrap items-start">
+            <button
+              onClick={toggleRate}
+              className="chip"
+              style={
+                rateMode === "normal"
+                  ? { background: "var(--ink)", color: "var(--paper)", borderColor: "var(--ink)" }
+                  : { background: "#fef3c7", color: "var(--accent)", borderColor: "var(--accent)" }
+              }
+            >
+              {rateMode === "normal" ? "⚡ 1.15×" : "🐢 0.85×"}
+            </button>
+            <a href="./" className="chip">
+              🏠 Home
+            </a>
+          </div>
+        </div>
+
+        {/* 検索 */}
+        <div className="mb-6">
+          <input
+            type="text"
+            value={search}
+            onChange={e => setSearch(e.target.value)}
+            placeholder="Search · 単語または意味で検索"
+            className="search-box"
+          />
+        </div>
+
+        {/* フィルター */}
+        <div className="space-y-3">
+          {/* タイプフィルター */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span
+              className="text-[10px] font-mono tracking-wider uppercase mr-2"
+              style={{ color: "var(--ink-faint)" }}
+            >
+              Type
+            </span>
+            {[
+              { value: "all", label: "ALL" },
+              { value: "target", label: "学習対象" },
+              { value: "phrase", label: "連語" },
+              { value: "word", label: "単語" }
+            ].map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => setTypeFilter(opt.value)}
+                className={`chip ${typeFilter === opt.value ? "active" : ""}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* ソート */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span
+              className="text-[10px] font-mono tracking-wider uppercase mr-2"
+              style={{ color: "var(--ink-faint)" }}
+            >
+              Sort
+            </span>
+            {[
+              { value: "alpha", label: "A→Z" },
+              { value: "type", label: "種類別" },
+              { value: "category", label: "カテゴリ別" }
+            ].map(opt => (
+              <button
+                key={opt.value}
+                onClick={() => setSortMode(opt.value)}
+                className={`chip ${sortMode === opt.value ? "active" : ""}`}
+              >
+                {opt.label}
+              </button>
+            ))}
+          </div>
+
+          {/* カテゴリフィルター */}
+          <div className="flex items-center gap-2 flex-wrap">
+            <span
+              className="text-[10px] font-mono tracking-wider uppercase mr-2"
+              style={{ color: "var(--ink-faint)" }}
+            >
+              Category
+            </span>
+            <button
+              onClick={() => setCategoryFilter("all")}
+              className={`chip ${categoryFilter === "all" ? "active" : ""}`}
+            >
+              ALL
+            </button>
+            {ALL_CATEGORIES.map(cat => (
+              <button
+                key={cat}
+                onClick={() => setCategoryFilter(cat)}
+                className={`chip ${categoryFilter === cat ? "active" : ""}`}
+                style={{ fontSize: "10px" }}
+              >
+                {cat}
+              </button>
+            ))}
+          </div>
+        </div>
+
+        {/* 統計 */}
+        <div
+          className="mt-6 pt-4 border-t flex items-baseline gap-4 flex-wrap"
+          style={{ borderColor: "var(--rule)" }}
+        >
+          <div className="font-mono text-xs" style={{ color: "var(--ink-faint)" }}>
+            <span className="text-2xl font-display" style={{ color: "var(--ink)" }}>
+              {filtered.length}
+            </span>
+            <span className="ml-1">/ {ALL_ENTRIES.length} entries</span>
+          </div>
+          <div className="text-[10px] font-mono uppercase tracking-wider" style={{ color: "var(--ink-faint)" }}>
+            target {ALL_ENTRIES.filter(e => e.type === "target").length} ·
+            phrase {ALL_ENTRIES.filter(e => e.type === "phrase").length} ·
+            word {ALL_ENTRIES.filter(e => e.type === "word").length}
+          </div>
+        </div>
+      </header>
+
+      <div className="ornamental-rule"></div>
+
+      {/* エントリーリスト */}
+      <main>
+        {filtered.length === 0 ? (
+          <div
+            className="text-center py-16 italic"
+            style={{ color: "var(--ink-faint)" }}
+          >
+            該当するエントリーが見つかりませんでした。
+          </div>
+        ) : sortMode === "alpha" ? (
+          Object.keys(groupedByLetter).sort().map(letter => (
+            <section key={letter}>
+              <SectionHeader letter={letter} />
+              {groupedByLetter[letter].map(entry => (
+                <EntryCard
+                  key={entry.id}
+                  entry={entry}
+                  speak={speak}
+                  speakingId={speakingId}
+                />
+              ))}
+            </section>
+          ))
+        ) : (
+          filtered.map(entry => (
+            <EntryCard
+              key={entry.id}
+              entry={entry}
+              speak={speak}
+              speakingId={speakingId}
+            />
+          ))
+        )}
+      </main>
+
+      <div className="ornamental-rule"></div>
+
+      {/* フッター */}
+      <footer
+        className="text-center text-[10px] font-mono tracking-wider mt-8"
+        style={{ color: "var(--ink-faint)" }}
+      >
+        © 2026 Kaoruko Takechi · All rights reserved.
+      </footer>
+    </div>
+  );
+}
+
+ReactDOM.createRoot(document.getElementById("root")).render(<App />);
+</script>
+</body>
+</html>
