@@ -752,37 +752,111 @@ const useSpeech = () => {
   const [voices, setVoices] = useState([]);
   const [speakingId, setSpeakingId] = useState(null);
   const [rateMode, setRateMode] = useState("normal");
+  const warmedUpRef = useRef(false);
 
   useEffect(() => {
     if (!("speechSynthesis" in window)) return;
-    const load = () => setVoices(window.speechSynthesis.getVoices());
+    const load = () => {
+      const list = window.speechSynthesis.getVoices();
+      if (list && list.length > 0) {
+        setVoices(list);
+      }
+    };
     load();
-    window.speechSynthesis.onvoiceschanged = load;
+    // voiceschanged は1回だけ発火する場合と複数回の場合があるので両対応
+    window.speechSynthesis.addEventListener("voiceschanged", load);
+    // Android で voices が遅延ロードされる対策：定期的にチェック
+    const interval = setInterval(() => {
+      const list = window.speechSynthesis.getVoices();
+      if (list && list.length > 0) {
+        setVoices(list);
+        clearInterval(interval);
+      }
+    }, 250);
+    // 5秒後に強制クリア
+    const timeout = setTimeout(() => clearInterval(interval), 5000);
     return () => {
-      window.speechSynthesis.onvoiceschanged = null;
-      window.speechSynthesis.cancel();
+      window.speechSynthesis.removeEventListener("voiceschanged", load);
+      clearInterval(interval);
+      clearTimeout(timeout);
+      try { window.speechSynthesis.cancel(); } catch (e) {}
     };
   }, []);
 
   const speak = (text, lang = "en-US", id = "x") => {
-    if (!("speechSynthesis" in window)) return;
-    window.speechSynthesis.cancel();
-    const u = new SpeechSynthesisUtterance(text);
-    u.lang = lang;
-    u.rate = rateMode === "slow" ? 0.85 : 1.15;
-    u.pitch = 1.0;
-    const fp = lang === "en-US"
-      ? /female|samantha|victoria|karen|zira|allison|ava|jenny|aria/i
-      : /female|kate|serena|moira|fiona|hazel|susan|emily/i;
-    const v = voices.find(x => x.lang === lang && fp.test(x.name))
-      || voices.find(x => x.lang === lang)
-      || voices.find(x => x.lang.startsWith(lang.slice(0,2)));
-    if (v) u.voice = v;
-    u.onstart = () => setSpeakingId(id);
-    u.onend = () => setSpeakingId(null);
-    u.onerror = () => setSpeakingId(null);
-    window.speechSynthesis.speak(u);
+    if (!("speechSynthesis" in window)) {
+      alert("お使いのブラウザは音声合成に対応していません。");
+      return;
+    }
+
+    // iOS Safari ウォームアップ：最初の発話だけ無音で起動
+    if (!warmedUpRef.current) {
+      try {
+        const warm = new SpeechSynthesisUtterance("");
+        warm.volume = 0;
+        window.speechSynthesis.speak(warm);
+      } catch (e) {}
+      warmedUpRef.current = true;
+    }
+
+    // 既に再生中なら止める（Androidでは少し遅延を入れる）
+    const isSpeaking = window.speechSynthesis.speaking || window.speechSynthesis.pending;
+    if (isSpeaking) {
+      window.speechSynthesis.cancel();
+    }
+
+    const doSpeak = () => {
+      try {
+        const u = new SpeechSynthesisUtterance(text);
+        u.lang = lang;
+        u.rate = rateMode === "slow" ? 0.85 : 1.15;
+        u.pitch = 1.0;
+        u.volume = 1.0;
+
+        // voice 検索（見つからなくても speak は試行）
+        const currentVoices = window.speechSynthesis.getVoices();
+        const allVoices = (currentVoices && currentVoices.length > 0) ? currentVoices : voices;
+
+        if (allVoices && allVoices.length > 0) {
+          const fp = lang === "en-US"
+            ? /female|samantha|victoria|karen|zira|allison|ava|jenny|aria|google us english/i
+            : /female|kate|serena|moira|fiona|hazel|susan|emily|google uk english female/i;
+          const v = allVoices.find(x => x.lang === lang && fp.test(x.name))
+            || allVoices.find(x => x.lang === lang)
+            || allVoices.find(x => x.lang && x.lang.toLowerCase().startsWith(lang.slice(0, 2).toLowerCase()));
+          if (v) u.voice = v;
+        }
+
+        u.onstart = () => setSpeakingId(id);
+        u.onend = () => setSpeakingId(null);
+        u.onerror = (e) => {
+          console.warn("Speech error:", e);
+          setSpeakingId(null);
+        };
+
+        window.speechSynthesis.speak(u);
+
+        // Android Chrome 対策：speak() が無視された場合の再試行
+        setTimeout(() => {
+          if (!window.speechSynthesis.speaking && !window.speechSynthesis.pending) {
+            // 何も再生されていない場合、もう一度試す
+            try { window.speechSynthesis.speak(u); } catch (e) {}
+          }
+        }, 100);
+      } catch (e) {
+        console.error("Speak failed:", e);
+        setSpeakingId(null);
+      }
+    };
+
+    if (isSpeaking) {
+      // cancel 後に少し待ってから speak（Android Chrome 対策）
+      setTimeout(doSpeak, 50);
+    } else {
+      doSpeak();
+    }
   };
+
   const toggleRate = () => setRateMode(p => p === "normal" ? "slow" : "normal");
   return { speak, speakingId, rateMode, toggleRate };
 };
