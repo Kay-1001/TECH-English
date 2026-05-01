@@ -1,0 +1,64 @@
+# Disallow all crawlers — this is private educational material
+# Author: Kaoruko Takechi (Kindai University Junior College)
+# License: CC BY-NC-ND 4.0
+
+User-agent: *
+Disallow: /
+
+# AI training data crawlers (explicit blocks)
+User-agent: GPTBot
+Disallow: /
+
+User-agent: ChatGPT-User
+Disallow: /
+
+User-agent: OAI-SearchBot
+Disallow: /
+
+User-agent: ClaudeBot
+Disallow: /
+
+User-agent: anthropic-ai
+Disallow: /
+
+User-agent: Claude-Web
+Disallow: /
+
+User-agent: Google-Extended
+Disallow: /
+
+User-agent: Googlebot
+Disallow: /
+
+User-agent: Bingbot
+Disallow: /
+
+User-agent: CCBot
+Disallow: /
+
+User-agent: PerplexityBot
+Disallow: /
+
+User-agent: Bytespider
+Disallow: /
+
+User-agent: Amazonbot
+Disallow: /
+
+User-agent: cohere-ai
+Disallow: /
+
+User-agent: Diffbot
+Disallow: /
+
+User-agent: FacebookBot
+Disallow: /
+
+User-agent: meta-externalagent
+Disallow: /
+
+User-agent: Applebot
+Disallow: /
+
+User-agent: Applebot-Extended
+Disallow: /
